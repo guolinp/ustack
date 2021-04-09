@@ -120,9 +120,10 @@ func (hb *Heartbeat) OnEvent(event Event) {
 				ub := UBufAlloc(1)
 				ub.WriteByte(0x12)
 
-				hb.lowerDataProcessor.OnUpperPush(NewUStackContext().
-					SetConnection(connection).
-					SetBuffer(ub))
+				hb.lowerDataProcessor.OnUpperPush(
+					NewUStackContext().
+						SetConnection(connection).
+						SetBuffer(ub))
 
 				fmt.Printf("Heartbeat: %s, send heartbeat\n", hb.GetName())
 				time.Sleep(time.Second)
