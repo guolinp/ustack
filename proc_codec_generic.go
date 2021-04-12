@@ -46,7 +46,10 @@ func (gc *GenericCodec) OnUpperData(context Context) {
 			return
 		}
 
-		ub := UBufAllocWithHeadReserved(4096, 128)
+		ub := UBufAllocWithHeadReserved(
+			gc.ustack.GetMTU(),
+			gc.ustack.GetOverhead())
+
 		err := gc.encoder(message, ub)
 		if err != nil {
 			fmt.Println("GenericCodec: encode error:")

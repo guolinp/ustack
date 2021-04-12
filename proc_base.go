@@ -55,6 +55,11 @@ func (base *Base) GetName() string {
 	return base.name
 }
 
+// GetOverhead returns the overhead
+func (base *Base) GetOverhead() int {
+	return 0
+}
+
 // SetOption set the options
 //     name: option name
 //     value: option value

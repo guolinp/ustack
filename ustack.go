@@ -26,6 +26,8 @@ type UStack interface {
 	GetEndPoint() []EndPoint
 
 	SetDataProcessor(dp DataProcessor) UStack
+	GetOverhead() int
+	GetMTU() int
 
 	SetTransport(tp Transport) UStack
 	GetTransport() Transport

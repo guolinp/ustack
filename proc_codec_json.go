@@ -41,8 +41,9 @@ func (jc *JSONCodec) OnUpperData(context Context) {
 			return
 		}
 
-		// for test: 4096, 12
-		ub := UBufAllocWithHeadReserved(4096, 128)
+		ub := UBufAllocWithHeadReserved(
+			jc.ustack.GetMTU(),
+			jc.ustack.GetOverhead())
 
 		n, err := ub.Write(jsonBytes)
 		if n == 0 || err != nil {

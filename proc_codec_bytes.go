@@ -36,8 +36,9 @@ func (bc *BytesCodec) OnUpperData(context Context) {
 			return
 		}
 
-		// for test: 4096, 12
-		ub := UBufAllocWithHeadReserved(4096, 128)
+		ub := UBufAllocWithHeadReserved(
+			bc.ustack.GetMTU(),
+			bc.ustack.GetOverhead())
 
 		n, err := ub.Write(bytes)
 		if n == 0 || err != nil {

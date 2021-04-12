@@ -9,6 +9,8 @@ type DataProcessor interface {
 	SetName(name string) DataProcessor
 	GetName() string
 
+	GetOverhead() int
+
 	ForServer(bool) DataProcessor
 
 	SetOption(name string, value interface{}) DataProcessor

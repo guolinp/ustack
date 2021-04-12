@@ -35,7 +35,10 @@ func (g *GOBCodec) OnUpperData(context Context) {
 			return
 		}
 
-		ub := UBufAllocWithHeadReserved(4096, 128)
+		ub := UBufAllocWithHeadReserved(
+			g.ustack.GetMTU(),
+			g.ustack.GetOverhead())
+
 		err := gob.NewEncoder(ub).Encode(message)
 		if err != nil {
 			fmt.Println("GOBCodec: gob encode error:", err)

@@ -22,6 +22,11 @@ func NewHeartbeat() DataProcessor {
 	return hb.Base.SetWhere(hb)
 }
 
+// GetOverhead returns the overhead
+func (hb *Heartbeat) GetOverhead() int {
+	return 1
+}
+
 // OnUpperData ...
 func (hb *Heartbeat) OnUpperData(context Context) {
 	hb.lower.OnUpperData(context)

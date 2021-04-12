@@ -59,18 +59,35 @@ func (c *DefaultUStackContext) GetBuffer() *UBuf {
 // DefaultUStack ...
 type DefaultUStack struct {
 	name       string
+	options    map[string]interface{}
 	endpoints  []EndPoint
 	transport  Transport
 	upperDeck  DataProcessor
 	processors []DataProcessor
+	overhead   int
 	lowerDeck  DataProcessor
 	listeners  []func(Event)
 }
 
+// NewUStack ...
+func NewUStack() UStack {
+	return &DefaultUStack{
+		name:       "UStack",
+		options:    make(map[string]interface{}),
+		endpoints:  nil,
+		transport:  nil,
+		upperDeck:  nil,
+		processors: nil,
+		overhead:   0,
+		lowerDeck:  nil,
+		listeners:  nil,
+	}
+}
+
 // build ...
 func (u *DefaultUStack) build() {
-	u.upperDeck = NewUpperDeck().SetName("UpperDeck").SetUStack(u)
-	u.lowerDeck = NewLowerDeck().SetName("LowerDeck").SetUStack(u)
+	u.upperDeck = NewUpperDeck().SetUStack(u)
+	u.lowerDeck = NewLowerDeck().SetUStack(u)
 
 	count := len(u.processors)
 
@@ -87,12 +104,9 @@ func (u *DefaultUStack) build() {
 		u.processors[count-1].SetLower(u.lowerDeck)
 		u.lowerDeck.SetUpper(u.processors[count-1])
 	}
-}
 
-// NewUStack ...
-func NewUStack() UStack {
-	return &DefaultUStack{
-		name: "UStack",
+	for i := 0; i < count; i++ {
+		u.overhead += u.processors[i].GetOverhead()
 	}
 }
 
@@ -109,13 +123,15 @@ func (u *DefaultUStack) GetName() string {
 
 // SetOption ...
 func (u *DefaultUStack) SetOption(name string, value interface{}) UStack {
-	// TODO
+	u.options[name] = value
 	return u
 }
 
 // GetOption ...
 func (u *DefaultUStack) GetOption(name string) interface{} {
-	// TODO
+	if value, ok := u.options[name]; ok {
+		return value
+	}
 	return nil
 }
 
@@ -134,6 +150,17 @@ func (u *DefaultUStack) GetEndPoint() []EndPoint {
 func (u *DefaultUStack) SetDataProcessor(dp DataProcessor) UStack {
 	u.processors = append(u.processors, dp)
 	return u
+}
+
+// GetOverhead returns all data processors overhead
+func (u *DefaultUStack) GetOverhead() int {
+	return u.overhead
+}
+
+// GetMTU returns maximum transmission unit size
+func (u *DefaultUStack) GetMTU() int {
+	// will get from options or Transport
+	return 2048
 }
 
 // SetTransport ...
