@@ -19,19 +19,19 @@ func client() {
 	ustack.NewUStack().
 		SetName("Client").
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Client", 0).
+			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventNewConnection {
 							connection := event.Data.(ustack.TransportConnection)
 							user := &User{Name: "LiSi", Age: 10}
-							fmt.Println("Client Send:", user.Name, user.Age)
+							fmt.Println("Send:", user.Name, user.Age)
 							endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, user)
 						} else if event.Type == ustack.UStackEventConnectionClosed {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{})).SetName("GOBCODEC-Server")).
+		AppendDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{}))).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -44,7 +44,7 @@ func server() {
 	ustack.NewUStack().
 		SetName("Server").
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Server", 0).
+			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventConnectionClosed {
@@ -54,9 +54,9 @@ func server() {
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						user := epd.GetData().(*User)
-						fmt.Println("Server receive:", user.Name, user.Age)
+						fmt.Println("Receive:", user.Name, user.Age)
 					})).
-		SetDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{})).SetName("GOBCODEC-Server")).
+		AppendDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{}))).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
@@ -65,7 +65,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -77,5 +76,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

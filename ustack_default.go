@@ -106,6 +106,7 @@ func (u *DefaultUStack) build() {
 	}
 
 	for i := 0; i < count; i++ {
+		u.processors[i].SetUStack(u)
 		u.overhead += u.processors[i].GetOverhead()
 	}
 }
@@ -146,8 +147,8 @@ func (u *DefaultUStack) GetEndPoint() []EndPoint {
 	return u.endpoints
 }
 
-// SetDataProcessor ...
-func (u *DefaultUStack) SetDataProcessor(dp DataProcessor) UStack {
+// AppendDataProcessor ...
+func (u *DefaultUStack) AppendDataProcessor(dp DataProcessor) UStack {
 	u.processors = append(u.processors, dp)
 	return u
 }

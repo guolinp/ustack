@@ -27,8 +27,8 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
-		SetDataProcessor(ustack.NewDiscarder()).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewDiscarder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -48,7 +48,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -60,5 +59,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

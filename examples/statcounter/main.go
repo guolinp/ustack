@@ -27,8 +27,8 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
-		SetDataProcessor(ustack.NewStatCounter()).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewStatCounter()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -41,7 +41,7 @@ func server() {
 	ustack.NewUStack().
 		SetName("Server").
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Server", 0).
+			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventConnectionClosed {
@@ -50,10 +50,10 @@ func server() {
 					}).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("receive:", string(epd.GetData().([]byte)))
+						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
-		SetDataProcessor(ustack.NewStatCounter()).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewStatCounter()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
@@ -62,7 +62,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -74,5 +73,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

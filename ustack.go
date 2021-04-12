@@ -25,7 +25,7 @@ type UStack interface {
 	SetEndPoint(ep EndPoint) UStack
 	GetEndPoint() []EndPoint
 
-	SetDataProcessor(dp DataProcessor) UStack
+	AppendDataProcessor(dp DataProcessor) UStack
 	GetOverhead() int
 	GetMTU() int
 

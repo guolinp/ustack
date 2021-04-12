@@ -16,19 +16,17 @@ type User struct {
 }
 
 func encoder(message interface{}, ub *ustack.UBuf) error {
-	err := gob.NewEncoder(ub).Encode(message)
-	fmt.Println("call encoder")
-	return err
+	fmt.Println("Call encoder")
+
+	return gob.NewEncoder(ub).Encode(message)
 }
 
 func decoder(ub *ustack.UBuf) (interface{}, error) {
+	fmt.Println("call decoder")
+
 	var user User = User{}
 	err := gob.NewDecoder(ub).Decode(&user)
-	fmt.Println("call decoder")
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+	return user, err
 }
 
 func client() {
@@ -41,13 +39,13 @@ func client() {
 						if event.Type == ustack.UStackEventNewConnection {
 							connection := event.Data.(ustack.TransportConnection)
 							user := &User{Name: "LiSi", Age: 10}
-							fmt.Println("Client Send:", user.Name, user.Age)
+							fmt.Println("Send:", user.Name, user.Age)
 							endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, user)
 						} else if event.Type == ustack.UStackEventConnectionClosed {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewGenericCodec(encoder, decoder)).
+		AppendDataProcessor(ustack.NewGenericCodec(encoder, decoder)).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -70,9 +68,9 @@ func server() {
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						user := epd.GetData().(User)
-						fmt.Println("Server receive:", user.Name, user.Age)
+						fmt.Println("Receive:", user.Name, user.Age)
 					})).
-		SetDataProcessor(ustack.NewGenericCodec(encoder, decoder)).
+		AppendDataProcessor(ustack.NewGenericCodec(encoder, decoder)).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
@@ -81,7 +79,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -93,5 +90,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

@@ -12,14 +12,14 @@ func client() {
 	ustack.NewUStack().
 		SetName("Client").
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Client1", 86).
+			ustack.NewEndPoint("EP-Client1", 86).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventNewConnection {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
 								for {
-									time.Sleep(time.Second * 3)
+									time.Sleep(time.Second * 2)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("EP1:86"))
 								}
 							}()
@@ -28,14 +28,14 @@ func client() {
 						}
 					})).
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Client2", 45).
+			ustack.NewEndPoint("EP-Client2", 45).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventNewConnection {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
 								for {
-									time.Sleep(time.Second * 7)
+									time.Sleep(time.Second * 3)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("EP2:45"))
 								}
 							}()
@@ -43,8 +43,8 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
-		SetDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Client")).
+		AppendDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
+		AppendDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Client")).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -56,7 +56,7 @@ func server() {
 	ustack.NewUStack().
 		SetName("Server").
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Server1", 86).
+			ustack.NewEndPoint("EP-Server1", 86).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventConnectionClosed {
@@ -65,10 +65,10 @@ func server() {
 					}).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("EP1: Recv: ", string(epd.GetData().([]byte)))
+						fmt.Println("EP1: Receive: ", string(epd.GetData().([]byte)))
 					})).
 		SetEndPoint(
-			ustack.NewEndPoint("AppEP-Server2", 45).
+			ustack.NewEndPoint("EP-Server2", 45).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventConnectionClosed {
@@ -77,10 +77,10 @@ func server() {
 					}).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("EP2: Recv: ", string(epd.GetData().([]byte)))
+						fmt.Println("EP2: Receive: ", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Server")).
-		SetDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Server")).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewSessionResolver()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
@@ -89,7 +89,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -101,5 +100,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

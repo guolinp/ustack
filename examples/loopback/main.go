@@ -31,8 +31,8 @@ func client() {
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						fmt.Println("receive loopback:", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
-		SetDataProcessor(ustack.NewLoopback()).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewLoopback()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -52,7 +52,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -64,5 +63,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }

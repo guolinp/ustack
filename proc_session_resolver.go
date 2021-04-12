@@ -17,6 +17,12 @@ func NewSessionResolver() DataProcessor {
 	return sr.Base.SetWhere(sr)
 }
 
+// GetOverhead ...
+func (sr *SessionResolver) GetOverhead() int {
+	// for saving session byte
+	return 1
+}
+
 // OnUpperData ...
 func (sr *SessionResolver) OnUpperData(context Context) {
 	if sr.enable {

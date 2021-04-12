@@ -29,9 +29,9 @@ func client() {
 					}).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("receive echo:", string(epd.GetData().([]byte)))
+						fmt.Println("Receive echo:", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewBytesCodec()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -43,7 +43,7 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
-		SetDataProcessor(ustack.NewEcho()).
+		AppendDataProcessor(ustack.NewEcho()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
@@ -52,7 +52,6 @@ func server() {
 }
 
 func main() {
-	help := func() { fmt.Println(os.Args[0], "<-s|-c|-h>") }
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
 			"-s": server,
@@ -64,5 +63,5 @@ func main() {
 		}
 	}
 
-	help()
+	fmt.Println(os.Args[0], "<-s|-c|-h>")
 }
