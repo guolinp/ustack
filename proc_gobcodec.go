@@ -31,14 +31,14 @@ func (g *GOBCodec) OnUpperPush(context Context) {
 		message, ok := context.GetOption("message")
 
 		if message == nil || !ok {
-			fmt.Println("invalid message data")
+			fmt.Println("GOBCodec: invalid message data")
 			return
 		}
 
 		ub := UBufAllocWithHeadReserved(4096, 128)
 		err := gob.NewEncoder(ub).Encode(message)
 		if err != nil {
-			fmt.Println("gob encode error:", err)
+			fmt.Println("GOBCodec: gob encode error:", err)
 			return
 		}
 
@@ -53,14 +53,14 @@ func (g *GOBCodec) OnLowerPush(context Context) {
 	if g.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("invalid lower data")
+			fmt.Println("GOBCodec: invalid lower data")
 			return
 		}
 
 		objectItf := reflect.New(g.objectType).Interface()
 		err := gob.NewDecoder(ub).Decode(objectItf)
 		if err != nil {
-			fmt.Println("gob encode error:", err)
+			fmt.Println("GOBCodec: gob encode error:", err)
 			return
 		}
 

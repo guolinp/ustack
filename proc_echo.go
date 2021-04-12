@@ -21,18 +21,15 @@ func NewEcho() DataProcessor {
 
 // OnUpperPush ...
 func (echo *Echo) OnUpperPush(context Context) {
-	if echo.enable {
-		fmt.Println("Echo OnUpperPush")
-	}
-
 	echo.lowerDataProcessor.OnUpperPush(context)
 }
 
 // OnLowerPush ...
 func (echo *Echo) OnLowerPush(context Context) {
 	if echo.enable {
-		fmt.Println("Echo OnLowerPush")
+		fmt.Println("Echo: send back the lowlayer data")
+		echo.lowerDataProcessor.OnUpperPush(context)
+	} else {
+		echo.upperDataProcessor.OnLowerPush(context)
 	}
-
-	echo.upperDataProcessor.OnLowerPush(context)
 }

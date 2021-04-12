@@ -22,17 +22,17 @@ func NewFilter() DataProcessor {
 // OnUpperPush ...
 func (filter *Filter) OnUpperPush(context Context) {
 	if filter.enable {
-		fmt.Println("Filter OnUpperPush")
+		fmt.Println("Filter: drop uplayer data")
+	} else {
+		filter.lowerDataProcessor.OnUpperPush(context)
 	}
-
-	filter.lowerDataProcessor.OnUpperPush(context)
 }
 
 // OnLowerPush ...
 func (filter *Filter) OnLowerPush(context Context) {
 	if filter.enable {
-		fmt.Println("Filter OnLowerPush")
+		fmt.Println("Filter: drop lowlayer data")
+	} else {
+		filter.upperDataProcessor.OnLowerPush(context)
 	}
-
-	filter.upperDataProcessor.OnLowerPush(context)
 }

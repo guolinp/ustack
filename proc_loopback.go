@@ -11,7 +11,7 @@ type Loopback struct {
 	Base
 }
 
-// NewLoopback ...
+// NewLoopback returns a new instance
 func NewLoopback() DataProcessor {
 	lb := &Loopback{
 		NewBaseInstance("Loopback"),
@@ -19,20 +19,8 @@ func NewLoopback() DataProcessor {
 	return lb.Base.SetWhere(lb)
 }
 
-// OnUpperPush ...
+// OnUpperPush sends back the message
 func (lb *Loopback) OnUpperPush(context Context) {
-	if lb.enable {
-		fmt.Println("Loopback OnUpperPush")
-	}
-
-	lb.lowerDataProcessor.OnUpperPush(context)
-}
-
-// OnLowerPush ...
-func (lb *Loopback) OnLowerPush(context Context) {
-	if lb.enable {
-		fmt.Println("Loopback OnLowerPush")
-	}
-
+	fmt.Println("Loopback: send back the uplayer data")
 	lb.upperDataProcessor.OnLowerPush(context)
 }

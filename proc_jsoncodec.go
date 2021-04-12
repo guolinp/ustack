@@ -31,13 +31,13 @@ func (jc *JSONCodec) OnUpperPush(context Context) {
 		message, ok := context.GetOption("message")
 
 		if message == nil || !ok {
-			fmt.Println("invalid message data")
+			fmt.Println("JSONCodec: invalid message data")
 			return
 		}
 
 		jsonBytes, err := json.Marshal(message)
 		if err != nil {
-			fmt.Println("failed to json marshal", err)
+			fmt.Println("JSONCodec: failed to json marshal", err)
 			return
 		}
 
@@ -60,7 +60,7 @@ func (jc *JSONCodec) OnLowerPush(context Context) {
 	if jc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("invalid lower data")
+			fmt.Println("JSONCodec: invalid lower data")
 			return
 		}
 
@@ -75,7 +75,7 @@ func (jc *JSONCodec) OnLowerPush(context Context) {
 		objectItf := reflect.New(jc.objectType).Interface()
 		err = json.Unmarshal(data, objectItf)
 		if err != nil {
-			fmt.Println("failed to json marshal", err)
+			fmt.Println("JSONCodec: failed to json marshal", err)
 			return
 		}
 

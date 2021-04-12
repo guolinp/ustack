@@ -8,26 +8,26 @@ import (
 	"fmt"
 )
 
-// BasicCodec ...
-type BasicCodec struct {
+// BytesCodec ...
+type BytesCodec struct {
 	Base
 }
 
-// NewBasicCodec ...
-func NewBasicCodec() DataProcessor {
-	bc := &BasicCodec{
-		NewBaseInstance("BasicCodec"),
+// NewBytesCodec ...
+func NewBytesCodec() DataProcessor {
+	bc := &BytesCodec{
+		NewBaseInstance("BytesCodec"),
 	}
 	return bc.Base.SetWhere(bc)
 }
 
 // OnUpperPush ...
-func (bc *BasicCodec) OnUpperPush(context Context) {
+func (bc *BytesCodec) OnUpperPush(context Context) {
 	if bc.enable {
 		message, ok := context.GetOption("message")
 
 		if message == nil || !ok {
-			fmt.Println("invalid message data")
+			fmt.Println("BytesCodec: invalid uplayer message")
 			return
 		}
 
@@ -51,11 +51,11 @@ func (bc *BasicCodec) OnUpperPush(context Context) {
 }
 
 // OnLowerPush ...
-func (bc *BasicCodec) OnLowerPush(context Context) {
+func (bc *BytesCodec) OnLowerPush(context Context) {
 	if bc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("invalid lower data")
+			fmt.Println("BytesCodec: invalid lowlayer data")
 			return
 		}
 

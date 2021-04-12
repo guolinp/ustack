@@ -22,7 +22,7 @@ func NewLoadBalancer() DataProcessor {
 // OnUpperPush ...
 func (lb *LoadBalancer) OnUpperPush(context Context) {
 	if lb.enable {
-		fmt.Println("LoadBalancer OnUpperPush")
+		fmt.Println("LoadBalancer: OnUpperPush: todo")
 	}
 
 	lb.lowerDataProcessor.OnUpperPush(context)
@@ -31,7 +31,7 @@ func (lb *LoadBalancer) OnUpperPush(context Context) {
 // OnLowerPush ...
 func (lb *LoadBalancer) OnLowerPush(context Context) {
 	if lb.enable {
-		fmt.Println("LoadBalancer OnLowerPush")
+		fmt.Println("LoadBalancer: OnLowerPush: todo")
 	}
 
 	lb.upperDataProcessor.OnLowerPush(context)

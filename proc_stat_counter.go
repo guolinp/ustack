@@ -9,12 +9,16 @@ import "fmt"
 // StatCounter ...
 type StatCounter struct {
 	Base
+	txCounter int
+	rxCounter int
 }
 
 // NewStatCounter ...
 func NewStatCounter() DataProcessor {
 	sc := &StatCounter{
-		NewBaseInstance("StatCounter"),
+		Base:      NewBaseInstance("StatCounter"),
+		txCounter: 0,
+		rxCounter: 0,
 	}
 	return sc.Base.SetWhere(sc)
 }
@@ -22,7 +26,8 @@ func NewStatCounter() DataProcessor {
 // OnUpperPush ...
 func (sc *StatCounter) OnUpperPush(context Context) {
 	if sc.enable {
-		fmt.Println("StatCounter OnUpperPush")
+		sc.txCounter++
+		fmt.Println("StatCounter: txCounter:", sc.txCounter)
 	}
 
 	sc.lowerDataProcessor.OnUpperPush(context)
@@ -31,7 +36,8 @@ func (sc *StatCounter) OnUpperPush(context Context) {
 // OnLowerPush ...
 func (sc *StatCounter) OnLowerPush(context Context) {
 	if sc.enable {
-		fmt.Println("StatCounter OnLowerPush")
+		sc.rxCounter++
+		fmt.Println("StatCounter: rxCounter:", sc.rxCounter)
 	}
 
 	sc.upperDataProcessor.OnLowerPush(context)
