@@ -12,75 +12,17 @@ import (
 
 // JSONCodec ...
 type JSONCodec struct {
-	name               string
-	enable             bool
-	options            map[string]interface{}
-	objectType         reflect.Type
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
+	Base
+	objectType reflect.Type
 }
 
 // NewJSONCodec ...
 func NewJSONCodec(t reflect.Type) DataProcessor {
-	return &JSONCodec{
-		name:       "JSONCodec",
-		enable:     true,
-		options:    make(map[string]interface{}),
+	jc := &JSONCodec{
+		Base:       NewBaseInstance("JSONCodec"),
 		objectType: t,
 	}
-}
-
-// SetName ...
-func (jc *JSONCodec) SetName(name string) DataProcessor {
-	jc.name = name
-	return jc
-}
-
-// GetName ...
-func (jc *JSONCodec) GetName() string {
-	return jc.name
-}
-
-// SetOption ...
-func (jc *JSONCodec) SetOption(name string, value interface{}) DataProcessor {
-	jc.options[name] = value
-	return jc
-}
-
-// GetOption ...
-func (jc *JSONCodec) GetOption(name string) interface{} {
-	if value, ok := jc.options[name]; ok {
-		return value
-	}
-	return nil
-}
-
-// SetEnable ...
-func (jc *JSONCodec) SetEnable(enable bool) DataProcessor {
-	jc.enable = enable
-	return jc
-}
-
-// ForServer ...
-func (jc *JSONCodec) ForServer(forServer bool) DataProcessor {
-	return jc
-}
-
-// SetUStack ...
-func (jc *JSONCodec) SetUStack(u UStack) DataProcessor {
-	return jc
-}
-
-// SetUpperDataProcessor ...
-func (jc *JSONCodec) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	jc.upperDataProcessor = dp
-	return jc
-}
-
-// SetLowerDataProcessor ...
-func (jc *JSONCodec) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	jc.lowerDataProcessor = dp
-	return jc
+	return jc.Base.SetWhere(jc)
 }
 
 // OnUpperPush ...
@@ -141,13 +83,4 @@ func (jc *JSONCodec) OnLowerPush(context Context) {
 	}
 
 	jc.upperDataProcessor.OnLowerPush(context)
-}
-
-// OnEvent ...
-func (jc *JSONCodec) OnEvent(event Event) {
-}
-
-// Run ...
-func (jc *JSONCodec) Run() DataProcessor {
-	return jc
 }

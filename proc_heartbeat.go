@@ -11,73 +11,15 @@ import (
 
 // Heartbeat ...
 type Heartbeat struct {
-	name               string
-	enbale             bool
-	options            map[string]interface{}
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
+	Base
 }
 
 // NewHeartbeat ...
 func NewHeartbeat() DataProcessor {
-	return &Heartbeat{
-		name:    "Heartbeat",
-		enbale:  true,
-		options: make(map[string]interface{}),
+	hb := &Heartbeat{
+		NewBaseInstance("Heartbeat"),
 	}
-}
-
-// SetName ...
-func (hb *Heartbeat) SetName(name string) DataProcessor {
-	hb.name = name
-	return hb
-}
-
-// GetName ...
-func (hb *Heartbeat) GetName() string {
-	return hb.name
-}
-
-// SetOption ...
-func (hb *Heartbeat) SetOption(name string, value interface{}) DataProcessor {
-	hb.options[name] = value
-	return hb
-}
-
-// GetOption ...
-func (hb *Heartbeat) GetOption(name string) interface{} {
-	if value, ok := hb.options[name]; ok {
-		return value
-	}
-	return nil
-}
-
-// SetEnable ...
-func (hb *Heartbeat) SetEnable(enable bool) DataProcessor {
-	hb.enbale = enable
-	return hb
-}
-
-// ForServer ...
-func (hb *Heartbeat) ForServer(forServer bool) DataProcessor {
-	return hb
-}
-
-// SetUStack ...
-func (hb *Heartbeat) SetUStack(u UStack) DataProcessor {
-	return hb
-}
-
-// SetUpperDataProcessor ...
-func (hb *Heartbeat) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	hb.upperDataProcessor = dp
-	return hb
-}
-
-// SetLowerDataProcessor ...
-func (hb *Heartbeat) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	hb.lowerDataProcessor = dp
-	return hb
+	return hb.Base.SetWhere(hb)
 }
 
 // OnUpperPush ...
@@ -130,9 +72,4 @@ func (hb *Heartbeat) OnEvent(event Event) {
 			}
 		}()
 	}
-}
-
-// Run ...
-func (hb *Heartbeat) Run() DataProcessor {
-	return hb
 }

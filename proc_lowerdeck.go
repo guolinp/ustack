@@ -8,14 +8,17 @@ import "fmt"
 
 // LowerDeck ...
 type LowerDeck struct {
-	name               string
-	ustack             UStack
-	options            map[string]interface{}
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
+	Base
 }
 
-// SetName ...
+// NewLowerDeck ...
+func NewLowerDeck() DataProcessor {
+	ld := &LowerDeck{
+		NewBaseInstance("LowerDeck"),
+	}
+	return ld.Base.SetWhere(ld)
+}
+
 func (ld *LowerDeck) closeConnection(c TransportConnection) {
 	c.Close()
 	ld.ustack.PublishEvent(Event{
@@ -23,67 +26,6 @@ func (ld *LowerDeck) closeConnection(c TransportConnection) {
 		Source: ld,
 		Data:   c,
 	})
-}
-
-// NewLowerDeck ...
-func NewLowerDeck() *LowerDeck {
-	return &LowerDeck{
-		name:    "LowerDeck",
-		options: make(map[string]interface{}),
-	}
-}
-
-// SetName ...
-func (ld *LowerDeck) SetName(name string) DataProcessor {
-	ld.name = name
-	return ld
-}
-
-// GetName ...
-func (ld *LowerDeck) GetName() string {
-	return ld.name
-}
-
-// SetOption ...
-func (ld *LowerDeck) SetOption(name string, value interface{}) DataProcessor {
-	ld.options[name] = value
-	return ld
-}
-
-// GetOption ...
-func (ld *LowerDeck) GetOption(name string) interface{} {
-	if value, ok := ld.options[name]; ok {
-		return value
-	}
-	return nil
-}
-
-// SetEnable ...
-func (ld *LowerDeck) SetEnable(enable bool) DataProcessor {
-	return ld
-}
-
-// ForServer ...
-func (ld *LowerDeck) ForServer(forServer bool) DataProcessor {
-	return ld
-}
-
-// SetUStack ...
-func (ld *LowerDeck) SetUStack(u UStack) DataProcessor {
-	ld.ustack = u
-	return ld
-}
-
-// SetUpperDataProcessor ...
-func (ld *LowerDeck) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	ld.upperDataProcessor = dp
-	return ld
-}
-
-// SetLowerDataProcessor ...
-func (ld *LowerDeck) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	ld.lowerDataProcessor = dp
-	return ld
 }
 
 // OnUpperPush ...
@@ -103,14 +45,6 @@ func (ld *LowerDeck) OnUpperPush(context Context) {
 		fmt.Printf("Connection is closed: %s\n", connection.GetName())
 		ld.closeConnection(connection)
 	}
-}
-
-// OnLowerPush ...
-func (ld *LowerDeck) OnLowerPush(context Context) {
-}
-
-// OnEvent ...
-func (ld *LowerDeck) OnEvent(event Event) {
 }
 
 // Run ...

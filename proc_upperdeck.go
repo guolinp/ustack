@@ -6,12 +6,8 @@ package ustack
 
 // UpperDeck ...
 type UpperDeck struct {
-	name               string
-	ustack             UStack
-	options            map[string]interface{}
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
-	endpoints          []EndPoint
+	Base
+	endpoints []EndPoint
 }
 
 // build ...
@@ -30,68 +26,12 @@ func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
 }
 
 // NewUpperDeck ...
-func NewUpperDeck() *UpperDeck {
-	return &UpperDeck{
-		name:    "UpperDeck",
-		options: make(map[string]interface{}),
+func NewUpperDeck() DataProcessor {
+	ud := &UpperDeck{
+		Base:      NewBaseInstance("UpperDeck"),
+		endpoints: nil,
 	}
-}
-
-// SetName ...
-func (ud *UpperDeck) SetName(name string) DataProcessor {
-	ud.name = name
-	return ud
-}
-
-// GetName ...
-func (ud *UpperDeck) GetName() string {
-	return ud.name
-}
-
-// SetOption ...
-func (ud *UpperDeck) SetOption(name string, value interface{}) DataProcessor {
-	ud.options[name] = value
-	return ud
-}
-
-// GetOption ...
-func (ud *UpperDeck) GetOption(name string) interface{} {
-	if value, ok := ud.options[name]; ok {
-		return value
-	}
-	return nil
-}
-
-// SetEnable ...
-func (ud *UpperDeck) SetEnable(enable bool) DataProcessor {
-	return ud
-}
-
-// ForServer ...
-func (ud *UpperDeck) ForServer(forServer bool) DataProcessor {
-	return ud
-}
-
-// SetUStack ...
-func (ud *UpperDeck) SetUStack(u UStack) DataProcessor {
-	ud.ustack = u
-	return ud
-}
-
-// SetUpperDataProcessor ...
-func (ud *UpperDeck) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	ud.upperDataProcessor = dp
-	return ud
-}
-
-// SetLowerDataProcessor ...
-func (ud *UpperDeck) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	ud.lowerDataProcessor = dp
-	return ud
-}
-
-// OnUpperPush ...
-func (ud *UpperDeck) OnUpperPush(context Context) {
+	return ud.Base.SetWhere(ud)
 }
 
 // OnLowerPush ...
@@ -116,10 +56,6 @@ func (ud *UpperDeck) OnLowerPush(context Context) {
 	}
 
 	ep.GetRxChannel() <- NewEndPointData(context.GetConnection(), message)
-}
-
-// OnEvent ...
-func (ud *UpperDeck) OnEvent(event Event) {
 }
 
 // Run ...

@@ -12,75 +12,17 @@ import (
 
 // GOBCodec ...
 type GOBCodec struct {
-	name               string
-	enable             bool
-	options            map[string]interface{}
-	objectType         reflect.Type
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
+	Base
+	objectType reflect.Type
 }
 
 // NewGOBCodec ...
 func NewGOBCodec(t reflect.Type) DataProcessor {
-	return &GOBCodec{
-		name:       "GOBCodec",
-		enable:     true,
-		options:    make(map[string]interface{}),
+	g := &GOBCodec{
+		Base:       NewBaseInstance("GOBCodec"),
 		objectType: t,
 	}
-}
-
-// SetName ...
-func (g *GOBCodec) SetName(name string) DataProcessor {
-	g.name = name
-	return g
-}
-
-// GetName ...
-func (g *GOBCodec) GetName() string {
-	return g.name
-}
-
-// SetOption ...
-func (g *GOBCodec) SetOption(name string, value interface{}) DataProcessor {
-	g.options[name] = value
-	return g
-}
-
-// GetOption ...
-func (g *GOBCodec) GetOption(name string) interface{} {
-	if value, ok := g.options[name]; ok {
-		return value
-	}
-	return nil
-}
-
-// SetEnable ...
-func (g *GOBCodec) SetEnable(enable bool) DataProcessor {
-	g.enable = enable
-	return g
-}
-
-// ForServer ...
-func (g *GOBCodec) ForServer(forServer bool) DataProcessor {
-	return g
-}
-
-// SetUStack ...
-func (g *GOBCodec) SetUStack(u UStack) DataProcessor {
-	return g
-}
-
-// SetUpperDataProcessor ...
-func (g *GOBCodec) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	g.upperDataProcessor = dp
-	return g
-}
-
-// SetLowerDataProcessor ...
-func (g *GOBCodec) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	g.lowerDataProcessor = dp
-	return g
+	return g.Base.SetWhere(g)
 }
 
 // OnUpperPush ...
@@ -126,13 +68,4 @@ func (g *GOBCodec) OnLowerPush(context Context) {
 	}
 
 	g.upperDataProcessor.OnLowerPush(context)
-}
-
-// OnEvent ...
-func (g *GOBCodec) OnEvent(event Event) {
-}
-
-// Run ...
-func (g *GOBCodec) Run() DataProcessor {
-	return g
 }
