@@ -12,7 +12,7 @@ func client() {
 	ustack.NewUStack().
 		SetName("Client").
 		SetEndPoint(
-			ustack.NewEndPoint("AppProcessors-Client", 0).
+			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventNewConnection {
@@ -29,13 +29,6 @@ func client() {
 					})).
 		SetDataProcessor(ustack.NewBytesCodec()).
 		SetDataProcessor(ustack.NewDiscarder()).
-		SetDataProcessor(ustack.NewEcho()).
-		SetDataProcessor(ustack.NewLoopback()).
-		SetDataProcessor(ustack.NewFilter()).
-		SetDataProcessor(ustack.NewForwarder()).
-		SetDataProcessor(ustack.NewFrameDecoder()).
-		SetDataProcessor(ustack.NewLoadBalancer()).
-		SetDataProcessor(ustack.NewStatCounter()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -47,27 +40,6 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
-		SetEndPoint(
-			ustack.NewEndPoint("AppProcessors-Server", 0).
-				SetEventListener(
-					func(endpoint ustack.EndPoint, event ustack.Event) {
-						if event.Type == ustack.UStackEventConnectionClosed {
-							os.Exit(1)
-						}
-					}).
-				SetDataListener(
-					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("receive:", string(epd.GetData().([]byte)))
-					})).
-		SetDataProcessor(ustack.NewBytesCodec()).
-		SetDataProcessor(ustack.NewDiscarder()).
-		SetDataProcessor(ustack.NewEcho()).
-		SetDataProcessor(ustack.NewLoopback()).
-		SetDataProcessor(ustack.NewFilter()).
-		SetDataProcessor(ustack.NewForwarder()).
-		SetDataProcessor(ustack.NewFrameDecoder()).
-		SetDataProcessor(ustack.NewLoadBalancer()).
-		SetDataProcessor(ustack.NewStatCounter()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).

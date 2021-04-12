@@ -43,7 +43,7 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewBasicCodec().SetName("PR-In-Client")).
+		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
 		SetDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Client")).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
@@ -79,7 +79,7 @@ func server() {
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						fmt.Println("EP2: Recv: ", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBasicCodec().SetName("PR-In-Server")).
+		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Server")).
 		SetDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Server")).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").

@@ -27,7 +27,7 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetDataProcessor(ustack.NewBasicCodec().SetName("PR-In-Client")).
+		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
 		SetTransport(
 			ustack.NewUDSTransport("udsClient").
 				ForServer(false).
@@ -51,7 +51,7 @@ func server() {
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						fmt.Println("receive:", string(epd.GetData().([]byte)))
 					})).
-		SetDataProcessor(ustack.NewBasicCodec().SetName("PR-In-Server")).
+		SetDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Server")).
 		SetTransport(
 			ustack.NewUDSTransport("udsServer").
 				ForServer(true).
