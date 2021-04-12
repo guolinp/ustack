@@ -15,12 +15,14 @@ func client() {
 			if event.Type == ustack.UStackEventHeartbeatLost {
 				connection := event.Data.(ustack.TransportConnection)
 				fmt.Println("connection:", connection.GetName(), "heartbeat lost")
-			} else if event.Type == ustack.UStackEventHeartbeatRecover {
-				connection := event.Data.(ustack.TransportConnection)
-				fmt.Println("connection:", connection.GetName(), "heartbeat recover")
 			}
 		}).
-		AppendDataProcessor(ustack.NewHeartbeat().ForServer(false)).
+		AppendDataProcessor(
+			ustack.NewHeartbeat().
+				SetOption("intervalInSecond", 10).
+				SetOption("timeoutInSecond", 3).
+				SetOption("closeOnLost", false).
+				ForServer(false)).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -31,7 +33,18 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
-		AppendDataProcessor(ustack.NewHeartbeat().ForServer(true)).
+		SetEventListener(func(event ustack.Event) {
+			if event.Type == ustack.UStackEventHeartbeatLost {
+				connection := event.Data.(ustack.TransportConnection)
+				fmt.Println("connection:", connection.GetName(), "heartbeat lost")
+			}
+		}).
+		AppendDataProcessor(
+			ustack.NewHeartbeat().
+				SetOption("intervalInSecond", 10).
+				SetOption("timeoutInSecond", 5).
+				SetOption("closeOnLost", true).
+				ForServer(true)).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
