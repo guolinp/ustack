@@ -20,7 +20,7 @@ func client() {
 							go func() {
 								for {
 									time.Sleep(time.Millisecond * 1000)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
+									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234567890"))
 								}
 							}()
 						} else if event.Type == ustack.UStackEventConnectionClosed {
@@ -28,6 +28,7 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -52,6 +53,7 @@ func server() {
 						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
