@@ -19,8 +19,8 @@ func NewLoopback() DataProcessor {
 	return lb.Base.SetWhere(lb)
 }
 
-// OnUpperPush sends back the message
-func (lb *Loopback) OnUpperPush(context Context) {
+// OnUpperData sends back the message
+func (lb *Loopback) OnUpperData(context Context) {
 	fmt.Println("Loopback: send back the uplayer data")
-	lb.upperDataProcessor.OnLowerPush(context)
+	lb.upper.OnLowerData(context)
 }

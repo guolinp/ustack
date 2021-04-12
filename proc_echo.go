@@ -19,17 +19,17 @@ func NewEcho() DataProcessor {
 	return echo.Base.SetWhere(echo)
 }
 
-// OnUpperPush ...
-func (echo *Echo) OnUpperPush(context Context) {
-	echo.lowerDataProcessor.OnUpperPush(context)
+// OnUpperData ...
+func (echo *Echo) OnUpperData(context Context) {
+	echo.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (echo *Echo) OnLowerPush(context Context) {
+// OnLowerData ...
+func (echo *Echo) OnLowerData(context Context) {
 	if echo.enable {
 		fmt.Println("Echo: send back the lowlayer data")
-		echo.lowerDataProcessor.OnUpperPush(context)
+		echo.lower.OnUpperData(context)
 	} else {
-		echo.upperDataProcessor.OnLowerPush(context)
+		echo.upper.OnLowerData(context)
 	}
 }

@@ -19,20 +19,20 @@ func NewLoadBalancer() DataProcessor {
 	return lb.Base.SetWhere(lb)
 }
 
-// OnUpperPush ...
-func (lb *LoadBalancer) OnUpperPush(context Context) {
+// OnUpperData ...
+func (lb *LoadBalancer) OnUpperData(context Context) {
 	if lb.enable {
-		fmt.Println("LoadBalancer: OnUpperPush: todo")
+		fmt.Println("LoadBalancer: OnUpperData: todo")
 	}
 
-	lb.lowerDataProcessor.OnUpperPush(context)
+	lb.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (lb *LoadBalancer) OnLowerPush(context Context) {
+// OnLowerData ...
+func (lb *LoadBalancer) OnLowerData(context Context) {
 	if lb.enable {
-		fmt.Println("LoadBalancer: OnLowerPush: todo")
+		fmt.Println("LoadBalancer: OnLowerData: todo")
 	}
 
-	lb.upperDataProcessor.OnLowerPush(context)
+	lb.upper.OnLowerData(context)
 }

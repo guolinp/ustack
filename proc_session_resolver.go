@@ -17,8 +17,8 @@ func NewSessionResolver() DataProcessor {
 	return sr.Base.SetWhere(sr)
 }
 
-// OnUpperPush ...
-func (sr *SessionResolver) OnUpperPush(context Context) {
+// OnUpperData ...
+func (sr *SessionResolver) OnUpperData(context Context) {
 	if sr.enable {
 		s, ok := context.GetOption("session")
 
@@ -41,11 +41,11 @@ func (sr *SessionResolver) OnUpperPush(context Context) {
 		}
 	}
 
-	sr.lowerDataProcessor.OnUpperPush(context)
+	sr.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (sr *SessionResolver) OnLowerPush(context Context) {
+// OnLowerData ...
+func (sr *SessionResolver) OnLowerData(context Context) {
 	if sr.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -60,5 +60,5 @@ func (sr *SessionResolver) OnLowerPush(context Context) {
 		context.SetOption("session", session)
 	}
 
-	sr.upperDataProcessor.OnLowerPush(context)
+	sr.upper.OnLowerData(context)
 }

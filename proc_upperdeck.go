@@ -34,8 +34,8 @@ func NewUpperDeck() DataProcessor {
 	return ud.Base.SetWhere(ud)
 }
 
-// OnLowerPush ...
-func (ud *UpperDeck) OnLowerPush(context Context) {
+// OnLowerData ...
+func (ud *UpperDeck) OnLowerData(context Context) {
 	var session byte = 0
 	sessionItf, ok := context.GetOption("session")
 	if ok {
@@ -62,13 +62,13 @@ func (ud *UpperDeck) OnLowerPush(context Context) {
 func (ud *UpperDeck) Run() DataProcessor {
 	ud.build()
 
-	ldp := ud.lowerDataProcessor
+	ldp := ud.lower
 	for _, ep := range ud.endpoints {
 		session := ep.GetSession()
 		txchan := ep.GetTxChannel()
 		go func() {
 			for epd := range txchan {
-				ldp.OnUpperPush(
+				ldp.OnUpperData(
 					NewUStackContext().
 						SetConnection(epd.GetConnection()).
 						SetOption("session", session).

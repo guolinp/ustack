@@ -16,13 +16,13 @@ type DataProcessor interface {
 
 	SetEnable(enable bool) DataProcessor
 
-	SetUStack(u UStack) DataProcessor
+	SetUStack(ustack UStack) DataProcessor
 
-	SetUpperDataProcessor(dp DataProcessor) DataProcessor
-	SetLowerDataProcessor(dp DataProcessor) DataProcessor
+	SetUpper(upper DataProcessor) DataProcessor
+	SetLower(lower DataProcessor) DataProcessor
 
-	OnUpperPush(context Context)
-	OnLowerPush(context Context)
+	OnUpperData(context Context)
+	OnLowerData(context Context)
 
 	OnEvent(event Event)
 

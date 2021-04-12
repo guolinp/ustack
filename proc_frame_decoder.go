@@ -19,20 +19,20 @@ func NewFrameDecoder() DataProcessor {
 	return frm.Base.SetWhere(frm)
 }
 
-// OnUpperPush ...
-func (frm *FrameDecoder) OnUpperPush(context Context) {
+// OnUpperData ...
+func (frm *FrameDecoder) OnUpperData(context Context) {
 	if frm.enable {
-		fmt.Println("FrameDecoder: OnUpperPush: todo ")
+		fmt.Println("FrameDecoder: OnUpperData: todo ")
 	}
 
-	frm.lowerDataProcessor.OnUpperPush(context)
+	frm.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (frm *FrameDecoder) OnLowerPush(context Context) {
+// OnLowerData ...
+func (frm *FrameDecoder) OnLowerData(context Context) {
 	if frm.enable {
-		fmt.Println("FrameDecoder: OnLowerPush: todo")
+		fmt.Println("FrameDecoder: OnLowerData: todo")
 	}
 
-	frm.upperDataProcessor.OnLowerPush(context)
+	frm.upper.OnLowerData(context)
 }

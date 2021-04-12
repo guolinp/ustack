@@ -75,17 +75,17 @@ func (u *DefaultUStack) build() {
 	count := len(u.processors)
 
 	if count == 0 {
-		u.upperDeck.SetLowerDataProcessor(u.lowerDeck)
-		u.lowerDeck.SetUpperDataProcessor(u.upperDeck)
+		u.upperDeck.SetLower(u.lowerDeck)
+		u.lowerDeck.SetUpper(u.upperDeck)
 	} else {
-		u.upperDeck.SetLowerDataProcessor(u.processors[0])
-		u.processors[0].SetUpperDataProcessor(u.upperDeck)
+		u.upperDeck.SetLower(u.processors[0])
+		u.processors[0].SetUpper(u.upperDeck)
 		for i := 0; i < count-1; i++ {
-			u.processors[i].SetLowerDataProcessor(u.processors[i+1])
-			u.processors[i+1].SetUpperDataProcessor(u.processors[i])
+			u.processors[i].SetLower(u.processors[i+1])
+			u.processors[i+1].SetUpper(u.processors[i])
 		}
-		u.processors[count-1].SetLowerDataProcessor(u.lowerDeck)
-		u.lowerDeck.SetUpperDataProcessor(u.processors[count-1])
+		u.processors[count-1].SetLower(u.lowerDeck)
+		u.lowerDeck.SetUpper(u.processors[count-1])
 	}
 }
 

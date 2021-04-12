@@ -28,8 +28,8 @@ func (ld *LowerDeck) closeConnection(c TransportConnection) {
 	})
 }
 
-// OnUpperPush ...
-func (ld *LowerDeck) OnUpperPush(context Context) {
+// OnUpperData ...
+func (ld *LowerDeck) OnUpperData(context Context) {
 	connection := context.GetConnection()
 	if connection == nil {
 		return
@@ -73,7 +73,7 @@ func (ld *LowerDeck) Run() DataProcessor {
 						return
 					}
 
-					ld.upperDataProcessor.OnLowerPush(
+					ld.upper.OnLowerData(
 						NewUStackContext().
 							SetConnection(connection).
 							SetBuffer(ub))

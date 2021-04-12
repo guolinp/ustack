@@ -23,22 +23,22 @@ func NewStatCounter() DataProcessor {
 	return sc.Base.SetWhere(sc)
 }
 
-// OnUpperPush ...
-func (sc *StatCounter) OnUpperPush(context Context) {
+// OnUpperData ...
+func (sc *StatCounter) OnUpperData(context Context) {
 	if sc.enable {
 		sc.txCounter++
 		fmt.Println("StatCounter: txCounter:", sc.txCounter)
 	}
 
-	sc.lowerDataProcessor.OnUpperPush(context)
+	sc.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (sc *StatCounter) OnLowerPush(context Context) {
+// OnLowerData ...
+func (sc *StatCounter) OnLowerData(context Context) {
 	if sc.enable {
 		sc.rxCounter++
 		fmt.Println("StatCounter: rxCounter:", sc.rxCounter)
 	}
 
-	sc.upperDataProcessor.OnLowerPush(context)
+	sc.upper.OnLowerData(context)
 }

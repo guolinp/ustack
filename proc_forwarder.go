@@ -19,20 +19,20 @@ func NewForwarder() DataProcessor {
 	return fwd.Base.SetWhere(fwd)
 }
 
-// OnUpperPush ...
-func (fwd *Forwarder) OnUpperPush(context Context) {
+// OnUpperData ...
+func (fwd *Forwarder) OnUpperData(context Context) {
 	if fwd.enable {
 		fmt.Println("Forwarder: forward uplayer data")
 	} else {
-		fwd.lowerDataProcessor.OnUpperPush(context)
+		fwd.lower.OnUpperData(context)
 	}
 }
 
-// OnLowerPush ...
-func (fwd *Forwarder) OnLowerPush(context Context) {
+// OnLowerData ...
+func (fwd *Forwarder) OnLowerData(context Context) {
 	if fwd.enable {
 		fmt.Println("Forwarder: forward lowlayer data")
 	} else {
-		fwd.upperDataProcessor.OnLowerPush(context)
+		fwd.upper.OnLowerData(context)
 	}
 }

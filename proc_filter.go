@@ -19,20 +19,20 @@ func NewFilter() DataProcessor {
 	return filter.Base.SetWhere(filter)
 }
 
-// OnUpperPush ...
-func (filter *Filter) OnUpperPush(context Context) {
+// OnUpperData ...
+func (filter *Filter) OnUpperData(context Context) {
 	if filter.enable {
 		fmt.Println("Filter: drop uplayer data")
 	} else {
-		filter.lowerDataProcessor.OnUpperPush(context)
+		filter.lower.OnUpperData(context)
 	}
 }
 
-// OnLowerPush ...
-func (filter *Filter) OnLowerPush(context Context) {
+// OnLowerData ...
+func (filter *Filter) OnLowerData(context Context) {
 	if filter.enable {
 		fmt.Println("Filter: drop lowlayer data")
 	} else {
-		filter.upperDataProcessor.OnLowerPush(context)
+		filter.upper.OnLowerData(context)
 	}
 }

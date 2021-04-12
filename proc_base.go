@@ -8,14 +8,14 @@ package ustack
 // the common operations of all data processor. it is usually embedded
 // in other data processor and should NOT be used directly
 type Base struct {
-	where              DataProcessor
-	name               string
-	enable             bool
-	ustack             UStack
-	forServer          bool
-	options            map[string]interface{}
-	upperDataProcessor DataProcessor
-	lowerDataProcessor DataProcessor
+	where     DataProcessor
+	name      string
+	enable    bool
+	ustack    UStack
+	forServer bool
+	options   map[string]interface{}
+	upper     DataProcessor
+	lower     DataProcessor
 }
 
 // NewBaseInstance returns a new instance
@@ -85,29 +85,29 @@ func (base *Base) ForServer(forServer bool) DataProcessor {
 }
 
 // SetUStack set the UStack instance
-func (base *Base) SetUStack(u UStack) DataProcessor {
-	base.ustack = u
+func (base *Base) SetUStack(ustack UStack) DataProcessor {
+	base.ustack = ustack
 	return base.where
 }
 
-// SetUpperDataProcessor set upper data processor instance
-func (base *Base) SetUpperDataProcessor(dp DataProcessor) DataProcessor {
-	base.upperDataProcessor = dp
+// SetUpper set upper data processor instance
+func (base *Base) SetUpper(upper DataProcessor) DataProcessor {
+	base.upper = upper
 	return base.where
 }
 
-// SetLowerDataProcessor set lower data processor instance
-func (base *Base) SetLowerDataProcessor(dp DataProcessor) DataProcessor {
-	base.lowerDataProcessor = dp
+// SetLower set lower data processor instance
+func (base *Base) SetLower(lower DataProcessor) DataProcessor {
+	base.lower = lower
 	return base.where
 }
 
-// OnUpperPush is called when upper layer sending data
-func (base *Base) OnUpperPush(context Context) {
+// OnUpperData is called when upper layer sending data
+func (base *Base) OnUpperData(context Context) {
 }
 
-// OnLowerPush is called when lower layer received data
-func (base *Base) OnLowerPush(context Context) {
+// OnLowerData is called when lower layer received data
+func (base *Base) OnLowerData(context Context) {
 }
 
 // OnEvent is called when any event hanppen

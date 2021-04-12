@@ -22,13 +22,13 @@ func NewHeartbeat() DataProcessor {
 	return hb.Base.SetWhere(hb)
 }
 
-// OnUpperPush ...
-func (hb *Heartbeat) OnUpperPush(context Context) {
-	hb.lowerDataProcessor.OnUpperPush(context)
+// OnUpperData ...
+func (hb *Heartbeat) OnUpperData(context Context) {
+	hb.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (hb *Heartbeat) OnLowerPush(context Context) {
+// OnLowerData ...
+func (hb *Heartbeat) OnLowerData(context Context) {
 	ub := context.GetBuffer()
 	if ub == nil {
 		return
@@ -45,7 +45,7 @@ func (hb *Heartbeat) OnLowerPush(context Context) {
 	}
 
 	// not a heartbeat message, pass it to uplayer
-	hb.upperDataProcessor.OnLowerPush(context)
+	hb.upper.OnLowerData(context)
 }
 
 // OnEvent ...
@@ -62,7 +62,7 @@ func (hb *Heartbeat) OnEvent(event Event) {
 				ub := UBufAlloc(1)
 				ub.WriteByte(0x12)
 
-				hb.lowerDataProcessor.OnUpperPush(
+				hb.lower.OnUpperData(
 					NewUStackContext().
 						SetConnection(connection).
 						SetBuffer(ub))

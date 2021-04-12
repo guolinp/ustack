@@ -25,8 +25,8 @@ func NewJSONCodec(t reflect.Type) DataProcessor {
 	return jc.Base.SetWhere(jc)
 }
 
-// OnUpperPush ...
-func (jc *JSONCodec) OnUpperPush(context Context) {
+// OnUpperData ...
+func (jc *JSONCodec) OnUpperData(context Context) {
 	if jc.enable {
 		message, ok := context.GetOption("message")
 
@@ -52,11 +52,11 @@ func (jc *JSONCodec) OnUpperPush(context Context) {
 		context.SetBuffer(ub)
 	}
 
-	jc.lowerDataProcessor.OnUpperPush(context)
+	jc.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (jc *JSONCodec) OnLowerPush(context Context) {
+// OnLowerData ...
+func (jc *JSONCodec) OnLowerData(context Context) {
 	if jc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -82,5 +82,5 @@ func (jc *JSONCodec) OnLowerPush(context Context) {
 		context.SetOption("message", objectItf)
 	}
 
-	jc.upperDataProcessor.OnLowerPush(context)
+	jc.upper.OnLowerData(context)
 }

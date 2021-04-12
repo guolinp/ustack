@@ -25,8 +25,8 @@ func NewGOBCodec(t reflect.Type) DataProcessor {
 	return g.Base.SetWhere(g)
 }
 
-// OnUpperPush ...
-func (g *GOBCodec) OnUpperPush(context Context) {
+// OnUpperData ...
+func (g *GOBCodec) OnUpperData(context Context) {
 	if g.enable {
 		message, ok := context.GetOption("message")
 
@@ -45,11 +45,11 @@ func (g *GOBCodec) OnUpperPush(context Context) {
 		context.SetBuffer(ub)
 	}
 
-	g.lowerDataProcessor.OnUpperPush(context)
+	g.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (g *GOBCodec) OnLowerPush(context Context) {
+// OnLowerData ...
+func (g *GOBCodec) OnLowerData(context Context) {
 	if g.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -67,5 +67,5 @@ func (g *GOBCodec) OnLowerPush(context Context) {
 		context.SetOption("message", objectItf)
 	}
 
-	g.upperDataProcessor.OnLowerPush(context)
+	g.upper.OnLowerData(context)
 }

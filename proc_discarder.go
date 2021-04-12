@@ -19,20 +19,20 @@ func NewDiscarder() DataProcessor {
 	return dis.Base.SetWhere(dis)
 }
 
-// OnUpperPush ...
-func (dis *Discarder) OnUpperPush(context Context) {
+// OnUpperData ...
+func (dis *Discarder) OnUpperData(context Context) {
 	if dis.enable {
 		fmt.Println("Discarder: drop the uplayer data")
 	} else {
-		dis.lowerDataProcessor.OnUpperPush(context)
+		dis.lower.OnUpperData(context)
 	}
 }
 
-// OnLowerPush ...
-func (dis *Discarder) OnLowerPush(context Context) {
+// OnLowerData ...
+func (dis *Discarder) OnLowerData(context Context) {
 	if dis.enable {
 		fmt.Println("Discarder: drop the lowlayer data")
 	} else {
-		dis.upperDataProcessor.OnLowerPush(context)
+		dis.upper.OnLowerData(context)
 	}
 }

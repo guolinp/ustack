@@ -21,8 +21,8 @@ func NewBytesCodec() DataProcessor {
 	return bc.Base.SetWhere(bc)
 }
 
-// OnUpperPush ...
-func (bc *BytesCodec) OnUpperPush(context Context) {
+// OnUpperData ...
+func (bc *BytesCodec) OnUpperData(context Context) {
 	if bc.enable {
 		message, ok := context.GetOption("message")
 
@@ -47,11 +47,11 @@ func (bc *BytesCodec) OnUpperPush(context Context) {
 		context.SetBuffer(ub)
 	}
 
-	bc.lowerDataProcessor.OnUpperPush(context)
+	bc.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (bc *BytesCodec) OnLowerPush(context Context) {
+// OnLowerData ...
+func (bc *BytesCodec) OnLowerData(context Context) {
 	if bc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -70,5 +70,5 @@ func (bc *BytesCodec) OnLowerPush(context Context) {
 		context.SetOption("message", bytes)
 	}
 
-	bc.upperDataProcessor.OnLowerPush(context)
+	bc.upper.OnLowerData(context)
 }

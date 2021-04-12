@@ -19,20 +19,20 @@ func NewFlowController() DataProcessor {
 	return fc.Base.SetWhere(fc)
 }
 
-// OnUpperPush ...
-func (fc *FlowController) OnUpperPush(context Context) {
+// OnUpperData ...
+func (fc *FlowController) OnUpperData(context Context) {
 	if fc.enable {
-		fmt.Println("FlowController: OnUpperPush: todo")
+		fmt.Println("FlowController: OnUpperData: todo")
 	}
 
-	fc.lowerDataProcessor.OnUpperPush(context)
+	fc.lower.OnUpperData(context)
 }
 
-// OnLowerPush ...
-func (fc *FlowController) OnLowerPush(context Context) {
+// OnLowerData ...
+func (fc *FlowController) OnLowerData(context Context) {
 	if fc.enable {
-		fmt.Println("FlowController: OnLowerPush: todo")
+		fmt.Println("FlowController: OnLowerData: todo")
 	}
 
-	fc.upperDataProcessor.OnLowerPush(context)
+	fc.upper.OnLowerData(context)
 }
