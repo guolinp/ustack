@@ -4,24 +4,6 @@
 
 package ustack
 
-const (
-	// UStackEventNewConnection ...
-	UStackEventNewConnection int = iota
-	// UStackEventConnectionClosed ...
-	UStackEventConnectionClosed
-	// UStackEventHeartbeatLost ...
-	UStackEventHeartbeatLost
-	// UStackEventHeartbeatRecover ...
-	UStackEventHeartbeatRecover
-)
-
-// Event ...
-type Event struct {
-	Type   int
-	Source interface{}
-	Data   interface{}
-}
-
 // Context ...
 type Context interface {
 	SetConnection(connection TransportConnection) Context
