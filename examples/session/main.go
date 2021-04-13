@@ -11,7 +11,7 @@ import (
 func client() {
 	ustack.NewUStack().
 		SetName("Client").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Client1", 86).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
@@ -27,7 +27,7 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Client2", 45).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
@@ -55,7 +55,7 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Server1", 86).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
@@ -67,7 +67,7 @@ func server() {
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						fmt.Println("EP1: Receive: ", string(epd.GetData().([]byte)))
 					})).
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Server2", 45).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {

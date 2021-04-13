@@ -136,8 +136,8 @@ func (u *DefaultUStack) GetOption(name string) interface{} {
 	return nil
 }
 
-// SetEndPoint ...
-func (u *DefaultUStack) SetEndPoint(ep EndPoint) UStack {
+// AddEndPoint ...
+func (u *DefaultUStack) AddEndPoint(ep EndPoint) UStack {
 	u.endpoints = append(u.endpoints, ep)
 	return u
 }

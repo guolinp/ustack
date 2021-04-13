@@ -22,7 +22,7 @@ type UStack interface {
 	SetOption(name string, value interface{}) UStack
 	GetOption(name string) interface{}
 
-	SetEndPoint(ep EndPoint) UStack
+	AddEndPoint(ep EndPoint) UStack
 	GetEndPoint() []EndPoint
 
 	AppendDataProcessor(dp DataProcessor) UStack

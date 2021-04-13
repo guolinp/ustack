@@ -18,7 +18,7 @@ type User struct {
 func client() {
 	ustack.NewUStack().
 		SetName("Client").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
@@ -43,7 +43,7 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {

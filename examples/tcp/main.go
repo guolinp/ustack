@@ -11,7 +11,7 @@ import (
 func client() {
 	ustack.NewUStack().
 		SetName("TcpClient").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
@@ -45,7 +45,7 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("TcpServer").
-		SetEndPoint(
+		AddEndPoint(
 			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
