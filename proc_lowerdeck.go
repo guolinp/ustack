@@ -53,43 +53,44 @@ func (ld *LowerDeck) OnUpperData(context Context) {
 // Run monitor new coming connection with routine
 // and receive data from any new connection with routine
 func (ld *LowerDeck) Run() DataProcessor {
-	tp := ld.ustack.GetTransport()
+	for _, transport := range ld.ustack.GetTransport() {
+		tp := transport
+		// New routinue to wait connections
+		go func() {
+			for {
+				// this call will be blocked until new connection coming
+				connection := tp.NextConnection()
 
-	// New routinue to wait connections
-	go func() {
-		for {
-			// this call will be blocked until new connection coming
-			connection := tp.NextConnection()
+				fmt.Println("New connection:", connection.GetName(), "on transport:", tp.GetName())
 
-			fmt.Println("New connection:", connection.GetName())
+				// publish event
+				ld.ustack.PublishEvent(Event{
+					Type:   UStackEventNewConnection,
+					Source: ld,
+					Data:   connection,
+				})
 
-			// publish event
-			ld.ustack.PublishEvent(Event{
-				Type:   UStackEventNewConnection,
-				Source: ld,
-				Data:   connection,
-			})
+				// New routine to continue receive data from connection
+				go func() {
+					for {
+						ub := UBufAlloc(ld.ustack.GetMTU())
 
-			// New routine to continue receive data from connection
-			go func() {
-				for {
-					ub := UBufAlloc(ld.ustack.GetMTU())
+						n, err := ub.ReadFrom(connection)
+						if n == 0 || err != nil {
+							ld.closeConnection(connection)
+							return
+						}
 
-					n, err := ub.ReadFrom(connection)
-					if n == 0 || err != nil {
-						ld.closeConnection(connection)
-						return
+						// invoke the uplayer
+						ld.upper.OnLowerData(
+							NewUStackContext().
+								SetConnection(connection).
+								SetBuffer(ub))
 					}
-
-					// invoke the uplayer
-					ld.upper.OnLowerData(
-						NewUStackContext().
-							SetConnection(connection).
-							SetBuffer(ub))
-				}
-			}()
-		}
-	}()
+				}()
+			}
+		}()
+	}
 
 	return ld
 }

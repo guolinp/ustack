@@ -30,7 +30,7 @@ type UStack interface {
 	GetMTU() int
 
 	SetTransport(tp Transport) UStack
-	GetTransport() Transport
+	GetTransport() []Transport
 
 	SetEventListener(listener func(Event)) UStack
 	PublishEvent(event Event) UStack

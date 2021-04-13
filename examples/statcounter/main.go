@@ -33,7 +33,15 @@ func client() {
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
-				SetAddress("127.0.0.1:1234")).
+				SetAddress("127.0.0.1:5555")).
+		SetTransport(
+			ustack.NewTCPTransport("tcpClientStat1").
+				ForServer(false).
+				SetAddress("127.0.0.1:5500")).
+		SetTransport(
+			ustack.NewTCPTransport("tcpClientStat2").
+				ForServer(false).
+				SetAddress("127.0.0.1:5501")).
 		Run()
 
 }
@@ -59,7 +67,7 @@ func server() {
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
-				SetAddress("127.0.0.1:1234")).
+				SetAddress("127.0.0.1:5555")).
 		Run()
 }
 

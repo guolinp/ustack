@@ -61,7 +61,7 @@ type DefaultUStack struct {
 	name       string
 	options    map[string]interface{}
 	endpoints  []EndPoint
-	transport  Transport
+	transports []Transport
 	upperDeck  DataProcessor
 	processors []DataProcessor
 	overhead   int
@@ -75,7 +75,7 @@ func NewUStack() UStack {
 		name:       "UStack",
 		options:    make(map[string]interface{}),
 		endpoints:  nil,
-		transport:  nil,
+		transports: nil,
 		upperDeck:  nil,
 		processors: nil,
 		overhead:   0,
@@ -166,13 +166,13 @@ func (u *DefaultUStack) GetMTU() int {
 
 // SetTransport ...
 func (u *DefaultUStack) SetTransport(tp Transport) UStack {
-	u.transport = tp
+	u.transports = append(u.transports, tp)
 	return u
 }
 
 // GetTransport ...
-func (u *DefaultUStack) GetTransport() Transport {
-	return u.transport
+func (u *DefaultUStack) GetTransport() []Transport {
+	return u.transports
 }
 
 // SetEventListener ...
@@ -205,6 +205,10 @@ func (u *DefaultUStack) Run() UStack {
 		dp.Run()
 	}
 	u.lowerDeck.Run()
-	u.transport.Run()
+
+	for _, tp := range u.transports {
+		tp.Run()
+	}
+
 	return u
 }

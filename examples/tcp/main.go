@@ -28,11 +28,16 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewStatCounter()).
 		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
+		SetTransport(
+			ustack.NewTCPTransport("tcpServerStat1").
+				ForServer(true).
+				SetAddress("127.0.0.1:5500")).
 		Run()
 
 }
@@ -53,11 +58,16 @@ func server() {
 						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewStatCounter()).
 		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).
+		SetTransport(
+			ustack.NewTCPTransport("tcpServerStat2").
+				ForServer(true).
+				SetAddress("127.0.0.1:5501")).
 		Run()
 }
 
