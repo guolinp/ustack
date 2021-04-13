@@ -168,7 +168,8 @@ func (sm *SharedMemoryTransport) NextConnection() TransportConnection {
 	return <-sm.connection
 }
 
-// Two Transports(Client side and Server side) should use the same SharedMemoryChannel.
+// Two Transports(Client side and Server side) should use the same
+// sharedMemoryChannel instance.
 // Keep a global list for reusing
 var mutex sync.Mutex
 var chans map[string]*sharedMemoryChannel = make(map[string]*sharedMemoryChannel, 32)
@@ -184,7 +185,6 @@ func (sm *SharedMemoryTransport) Run() Transport {
 		// not found, create new one
 		ch = newSharedMemoryChannel(512)
 		chans[sm.address] = ch
-		fmt.Println(sm.address, ch)
 	}
 	sm.connection <- NewSharedMemoryTransportConnection(sm.name, sm.forServer, ch)
 

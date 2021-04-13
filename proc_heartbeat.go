@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	HeartbeatMessageTag byte = 0x83
-	UplayerMessageTag   byte = 0x00
+	HeartbeatSelfMessageTag    byte = 0x83
+	HeartbeatUplayerMessageTag byte = 0x00
 )
 
 // Heartbeat ...
@@ -98,7 +98,7 @@ func (hb *Heartbeat) OnUpperData(context Context) {
 		return
 	}
 
-	ub.WriteHeadByte(UplayerMessageTag)
+	ub.WriteHeadByte(HeartbeatUplayerMessageTag)
 
 	hb.lower.OnUpperData(context)
 }
@@ -110,19 +110,18 @@ func (hb *Heartbeat) OnLowerData(context Context) {
 		return
 	}
 
-	tag, err := ub.PeekByte()
+	tag, err := ub.ReadByte()
 	if err != nil {
 		return
 	}
 
-	if tag == HeartbeatMessageTag {
+	if tag == HeartbeatSelfMessageTag {
 		hb.updateMonitor(context.GetConnection())
 
 		fmt.Printf("Heartbeat: %s, receive heartbeat\n", hb.GetName())
 		return
 	}
 
-	// not a heartbeat message, pass it to uplayer
 	hb.upper.OnLowerData(context)
 }
 
@@ -142,8 +141,11 @@ func (hb *Heartbeat) OnEvent(event Event) {
 					return
 				}
 
-				ub := UBufAlloc(1)
-				ub.WriteByte(HeartbeatMessageTag)
+				ub := UBufAllocWithHeadReserved(
+					hb.ustack.GetMTU(),
+					hb.ustack.GetOverhead())
+
+				ub.WriteByte(HeartbeatSelfMessageTag)
 
 				hb.lower.OnUpperData(
 					NewUStackContext().

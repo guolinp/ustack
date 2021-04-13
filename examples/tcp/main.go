@@ -10,7 +10,7 @@ import (
 
 func client() {
 	ustack.NewUStack().
-		SetName("Client").
+		SetName("TcpClient").
 		SetEndPoint(
 			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
@@ -19,7 +19,7 @@ func client() {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
 								for {
-									time.Sleep(time.Millisecond)
+									time.Sleep(time.Millisecond * 50)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234567890"))
 								}
 							}()
@@ -39,7 +39,7 @@ func client() {
 
 func server() {
 	ustack.NewUStack().
-		SetName("Server").
+		SetName("TcpServer").
 		SetEndPoint(
 			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(

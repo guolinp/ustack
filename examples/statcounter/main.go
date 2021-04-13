@@ -10,7 +10,7 @@ import (
 
 func client() {
 	ustack.NewUStack().
-		SetName("Client").
+		SetName("PeerClient").
 		SetEndPoint(
 			ustack.NewEndPoint("EP-Client", 0).
 				SetEventListener(
@@ -19,7 +19,7 @@ func client() {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
 								for {
-									time.Sleep(time.Millisecond * 500)
+									time.Sleep(time.Millisecond * 400)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
 								}
 							}()
@@ -28,7 +28,8 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		AppendDataProcessor(ustack.NewStatCounter()).
+		AppendDataProcessor(ustack.NewStatCounter().SetOption("Collect.IntervalInSecond", 2)).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -39,7 +40,7 @@ func client() {
 
 func server() {
 	ustack.NewUStack().
-		SetName("Server").
+		SetName("PeerServer").
 		SetEndPoint(
 			ustack.NewEndPoint("EP-Server", 0).
 				SetEventListener(
@@ -54,6 +55,7 @@ func server() {
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewStatCounter()).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
