@@ -29,7 +29,7 @@ type UStack interface {
 	GetOverhead() int
 	GetMTU() int
 
-	SetTransport(tp Transport) UStack
+	AddTransport(tp Transport) UStack
 	GetTransport() []Transport
 
 	SetEventListener(listener func(Event)) UStack

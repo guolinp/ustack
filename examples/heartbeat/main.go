@@ -23,7 +23,7 @@ func client() {
 				SetOption("timeoutInSecond", 3).
 				SetOption("closeOnLost", false).
 				ForServer(false)).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
@@ -45,7 +45,7 @@ func server() {
 				SetOption("timeoutInSecond", 5).
 				SetOption("closeOnLost", true).
 				ForServer(true)).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).

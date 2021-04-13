@@ -28,7 +28,7 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		SetTransport(
+		AddTransport(
 			ustack.NewUDSTransport("udsClient").
 				ForServer(false).
 				SetAddress("/tmp/gouds.socket")).
@@ -52,7 +52,7 @@ func server() {
 						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		SetTransport(
+		AddTransport(
 			ustack.NewUDSTransport("udsServer").
 				ForServer(true).
 				SetAddress("/tmp/gouds.socket")).

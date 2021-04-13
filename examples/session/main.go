@@ -45,7 +45,7 @@ func client() {
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
 		AppendDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Client")).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
@@ -81,7 +81,7 @@ func server() {
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewSessionResolver()).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).

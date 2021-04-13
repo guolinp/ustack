@@ -32,7 +32,7 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{}))).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
@@ -57,7 +57,7 @@ func server() {
 						fmt.Println("Receive:", user.Name, user.Age)
 					})).
 		AppendDataProcessor(ustack.NewGOBCodec(reflect.TypeOf(User{}))).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).

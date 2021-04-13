@@ -30,7 +30,7 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		SetTransport(
+		AddTransport(
 			ustack.NewSharedMemoryTransport("SharedMemoryClient").
 				ForServer(false).
 				SetAddress("SharedMemory")).
@@ -54,7 +54,7 @@ func server() {
 						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		SetTransport(
+		AddTransport(
 			ustack.NewSharedMemoryTransport("SharedMemoryServer").
 				ForServer(true).
 				SetAddress("SharedMemory")).

@@ -32,7 +32,7 @@ func client() {
 						fmt.Println("Receive echo:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
@@ -44,7 +44,7 @@ func server() {
 	ustack.NewUStack().
 		SetName("Server").
 		AppendDataProcessor(ustack.NewEcho()).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).

@@ -30,11 +30,11 @@ func client() {
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewStatCounter()).
 		AppendDataProcessor(ustack.NewFrameDecoder()).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServerStat1").
 				ForServer(true).
 				SetAddress("127.0.0.1:5500")).
@@ -60,11 +60,11 @@ func server() {
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewStatCounter()).
 		AppendDataProcessor(ustack.NewFrameDecoder()).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).
-		SetTransport(
+		AddTransport(
 			ustack.NewTCPTransport("tcpServerStat2").
 				ForServer(true).
 				SetAddress("127.0.0.1:5501")).

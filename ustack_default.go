@@ -164,8 +164,8 @@ func (u *DefaultUStack) GetMTU() int {
 	return 2048
 }
 
-// SetTransport ...
-func (u *DefaultUStack) SetTransport(tp Transport) UStack {
+// AddTransport ...
+func (u *DefaultUStack) AddTransport(tp Transport) UStack {
 	u.transports = append(u.transports, tp)
 	return u
 }
