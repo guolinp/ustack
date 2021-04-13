@@ -30,7 +30,6 @@ func (g *GOBCodec) OnUpperData(context Context) {
 	if g.enable {
 		message := context.GetOption("message")
 		if message == nil {
-			fmt.Println("GOBCodec: invalid message data")
 			return
 		}
 
@@ -55,7 +54,6 @@ func (g *GOBCodec) OnLowerData(context Context) {
 	if g.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("GOBCodec: invalid lower data")
 			return
 		}
 

@@ -4,10 +4,6 @@
 
 package ustack
 
-import (
-	"fmt"
-)
-
 // BytesCodec ...
 type BytesCodec struct {
 	Base
@@ -26,7 +22,6 @@ func (bc *BytesCodec) OnUpperData(context Context) {
 	if bc.enable {
 		bytes, ok := OptionParseByteSlice(context.GetOption("message"))
 		if !ok {
-			fmt.Println("BytesCodec: invalid uplayer message")
 			return
 		}
 
@@ -50,14 +45,12 @@ func (bc *BytesCodec) OnLowerData(context Context) {
 	if bc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("BytesCodec: invalid lowlayer data")
 			return
 		}
 
-		size := ub.ReadableLength()
-		bytes := make([]byte, size)
-		n, err := ub.Read(bytes)
+		bytes := make([]byte, ub.ReadableLength())
 
+		n, err := ub.Read(bytes)
 		if n == 0 || err != nil {
 			return
 		}

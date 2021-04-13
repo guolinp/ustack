@@ -158,7 +158,7 @@ func (t *TCPTransport) connect() {
 			return
 		}
 
-		fmt.Println(err, ",retry ...")
+		fmt.Println(err, "retry ...")
 
 		time.Sleep(time.Second)
 	}

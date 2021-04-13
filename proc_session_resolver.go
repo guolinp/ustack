@@ -12,7 +12,7 @@ type SessionResolver struct {
 // NewSessionResolver ...
 func NewSessionResolver() DataProcessor {
 	sr := &SessionResolver{
-		NewBaseInstance("Session"),
+		NewBaseInstance("SessionResolver"),
 	}
 	return sr.Base.SetWhere(sr)
 }

@@ -71,7 +71,6 @@ func (gc *GenericCodec) OnLowerData(context Context) {
 
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("GenericCodec: invalid lower data")
 			return
 		}
 

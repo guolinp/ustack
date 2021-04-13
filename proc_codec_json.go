@@ -30,7 +30,6 @@ func (jc *JSONCodec) OnUpperData(context Context) {
 	if jc.enable {
 		message := context.GetOption("message")
 		if message == nil {
-			fmt.Println("JSONCodec: invalid message data")
 			return
 		}
 
@@ -60,14 +59,12 @@ func (jc *JSONCodec) OnLowerData(context Context) {
 	if jc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
-			fmt.Println("JSONCodec: invalid lower data")
 			return
 		}
 
-		size := ub.ReadableLength()
-		data := make([]byte, size)
+		data := make([]byte, ub.ReadableLength())
+		
 		n, err := ub.Read(data)
-
 		if n == 0 || err != nil {
 			return
 		}

@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+const (
+	HeartbeatMessageTag byte = 0x83
+	UplayerMessageTag   byte = 0x00
+)
+
 // Heartbeat ...
 type Heartbeat struct {
 	Base
@@ -88,6 +93,13 @@ func (hb *Heartbeat) GetOverhead() int {
 
 // OnUpperData ...
 func (hb *Heartbeat) OnUpperData(context Context) {
+	ub := context.GetBuffer()
+	if ub == nil {
+		return
+	}
+
+	ub.WriteHeadByte(UplayerMessageTag)
+
 	hb.lower.OnUpperData(context)
 }
 
@@ -98,12 +110,12 @@ func (hb *Heartbeat) OnLowerData(context Context) {
 		return
 	}
 
-	heartbeat, err := ub.PeekByte()
+	tag, err := ub.PeekByte()
 	if err != nil {
 		return
 	}
 
-	if heartbeat == 0x12 {
+	if tag == HeartbeatMessageTag {
 		hb.updateMonitor(context.GetConnection())
 
 		fmt.Printf("Heartbeat: %s, receive heartbeat\n", hb.GetName())
@@ -131,7 +143,7 @@ func (hb *Heartbeat) OnEvent(event Event) {
 				}
 
 				ub := UBufAlloc(1)
-				ub.WriteByte(0x12)
+				ub.WriteByte(HeartbeatMessageTag)
 
 				hb.lower.OnUpperData(
 					NewUStackContext().

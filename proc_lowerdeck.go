@@ -6,12 +6,12 @@ package ustack
 
 import "fmt"
 
-// LowerDeck ...
+// LowerDeck manages transports
 type LowerDeck struct {
 	Base
 }
 
-// NewLowerDeck ...
+// NewLowerDeck returns a new instance
 func NewLowerDeck() DataProcessor {
 	ld := &LowerDeck{
 		NewBaseInstance("LowerDeck"),
@@ -20,7 +20,10 @@ func NewLowerDeck() DataProcessor {
 }
 
 func (ld *LowerDeck) closeConnection(c TransportConnection) {
+	// close first
 	c.Close()
+
+	// publish event
 	ld.ustack.PublishEvent(Event{
 		Type:   UStackEventConnectionClosed,
 		Source: ld,
@@ -28,15 +31,15 @@ func (ld *LowerDeck) closeConnection(c TransportConnection) {
 	})
 }
 
-// OnUpperData ...
+// OnUpperData sends ulayer data with connection
 func (ld *LowerDeck) OnUpperData(context Context) {
-	connection := context.GetConnection()
-	if connection == nil {
+	ub := context.GetBuffer()
+	if ub == nil {
 		return
 	}
 
-	ub := context.GetBuffer()
-	if ub == nil {
+	connection := context.GetConnection()
+	if connection == nil {
 		return
 	}
 
@@ -47,25 +50,30 @@ func (ld *LowerDeck) OnUpperData(context Context) {
 	}
 }
 
-// Run ...
+// Run monitor new coming connection with routine
+// and receive data from any new connection with routine
 func (ld *LowerDeck) Run() DataProcessor {
 	tp := ld.ustack.GetTransport()
 
+	// New routinue to wait connections
 	go func() {
 		for {
+			// this call will be blocked until new connection coming
 			connection := tp.NextConnection()
 
 			fmt.Println("New connection:", connection.GetName())
 
+			// publish event
 			ld.ustack.PublishEvent(Event{
 				Type:   UStackEventNewConnection,
 				Source: ld,
 				Data:   connection,
 			})
 
+			// New routine to continue receive data from connection
 			go func() {
 				for {
-					ub := UBufAlloc(4096)
+					ub := UBufAlloc(ld.ustack.GetMTU())
 
 					n, err := ub.ReadFrom(connection)
 					if n == 0 || err != nil {
@@ -73,6 +81,7 @@ func (ld *LowerDeck) Run() DataProcessor {
 						return
 					}
 
+					// invoke the uplayer
 					ld.upper.OnLowerData(
 						NewUStackContext().
 							SetConnection(connection).

@@ -4,18 +4,16 @@
 
 package ustack
 
-// UpperDeck ...
+// UpperDeck manages endpoints
 type UpperDeck struct {
 	Base
 	endpoints []EndPoint
 }
 
-// build ...
 func (ud *UpperDeck) build() {
 	ud.endpoints = ud.ustack.GetEndPoint()
 }
 
-// findEndPoint ...
 func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
 	for _, ep := range ud.endpoints {
 		if ep.GetSession() == session {
@@ -25,7 +23,7 @@ func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
 	return nil
 }
 
-// NewUpperDeck ...
+// NewUpperDeck returns a new instance
 func NewUpperDeck() DataProcessor {
 	ud := &UpperDeck{
 		Base:      NewBaseInstance("UpperDeck"),
@@ -34,7 +32,7 @@ func NewUpperDeck() DataProcessor {
 	return ud.Base.SetWhere(ud)
 }
 
-// OnLowerData ...
+// OnLowerData finds the endpoint with session and pass data
 func (ud *UpperDeck) OnLowerData(context Context) {
 	message := context.GetOption("message")
 	if message == nil {
@@ -51,15 +49,19 @@ func (ud *UpperDeck) OnLowerData(context Context) {
 
 // Run ...
 func (ud *UpperDeck) Run() DataProcessor {
+	// do build
 	ud.build()
 
-	ldp := ud.lower
+	lower := ud.lower
 	for _, ep := range ud.endpoints {
 		session := ep.GetSession()
 		txchan := ep.GetTxChannel()
+
+		// create routinue for each endpoint
+		// read data from endpoint and pass it to lowlayer
 		go func() {
 			for epd := range txchan {
-				ldp.OnUpperData(
+				lower.OnUpperData(
 					NewUStackContext().
 						SetConnection(epd.GetConnection()).
 						SetOption("session", session).

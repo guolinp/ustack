@@ -22,17 +22,17 @@ func NewForwarder() DataProcessor {
 // OnUpperData ...
 func (fwd *Forwarder) OnUpperData(context Context) {
 	if fwd.enable {
-		fmt.Println("Forwarder: forward uplayer data")
-	} else {
-		fwd.lower.OnUpperData(context)
+		fmt.Println("Forwarder: forward uplayer data, todo")
 	}
+
+	fwd.lower.OnUpperData(context)
 }
 
 // OnLowerData ...
 func (fwd *Forwarder) OnLowerData(context Context) {
 	if fwd.enable {
-		fmt.Println("Forwarder: forward lowlayer data")
-	} else {
-		fwd.upper.OnLowerData(context)
+		fmt.Println("Forwarder: forward lowlayer data, todo")
 	}
+
+	fwd.upper.OnLowerData(context)
 }
