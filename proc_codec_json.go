@@ -28,9 +28,8 @@ func NewJSONCodec(t reflect.Type) DataProcessor {
 // OnUpperData ...
 func (jc *JSONCodec) OnUpperData(context Context) {
 	if jc.enable {
-		message, ok := context.GetOption("message")
-
-		if message == nil || !ok {
+		message := context.GetOption("message")
+		if message == nil {
 			fmt.Println("JSONCodec: invalid message data")
 			return
 		}

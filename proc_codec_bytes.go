@@ -24,15 +24,9 @@ func NewBytesCodec() DataProcessor {
 // OnUpperData ...
 func (bc *BytesCodec) OnUpperData(context Context) {
 	if bc.enable {
-		message, ok := context.GetOption("message")
-
-		if message == nil || !ok {
-			fmt.Println("BytesCodec: invalid uplayer message")
-			return
-		}
-
-		bytes, ok := message.([]byte)
+		bytes, ok := OptionParseByteSlice(context.GetOption("message"))
 		if !ok {
+			fmt.Println("BytesCodec: invalid uplayer message")
 			return
 		}
 

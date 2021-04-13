@@ -9,7 +9,7 @@ type Context interface {
 	SetConnection(connection TransportConnection) Context
 	GetConnection() TransportConnection
 	SetOption(name string, value interface{}) Context
-	GetOption(name string) (interface{}, bool)
+	GetOption(name string) interface{}
 	SetBuffer(ub *UBuf) Context
 	GetBuffer() *UBuf
 }

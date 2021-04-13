@@ -26,20 +26,12 @@ func (sr *SessionResolver) GetOverhead() int {
 // OnUpperData ...
 func (sr *SessionResolver) OnUpperData(context Context) {
 	if sr.enable {
-		s, ok := context.GetOption("session")
-
-		var session byte = 0
-		if ok {
-			session, ok = s.(byte)
-			if !ok {
-				return
-			}
-		}
-
 		ub := context.GetBuffer()
 		if ub == nil {
 			return
 		}
+
+		session, _ := OptionParseByte(context.GetOption("session"), 0)
 
 		err := ub.WriteHeadByte(session)
 		if err != nil {

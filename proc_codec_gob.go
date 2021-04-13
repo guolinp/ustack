@@ -28,9 +28,8 @@ func NewGOBCodec(t reflect.Type) DataProcessor {
 // OnUpperData ...
 func (g *GOBCodec) OnUpperData(context Context) {
 	if g.enable {
-		message, ok := context.GetOption("message")
-
-		if message == nil || !ok {
+		message := context.GetOption("message")
+		if message == nil {
 			fmt.Println("GOBCodec: invalid message data")
 			return
 		}

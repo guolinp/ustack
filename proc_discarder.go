@@ -21,11 +21,7 @@ func NewDiscarder() DataProcessor {
 
 // OnUpperData ...
 func (dis *Discarder) OnUpperData(context Context) {
-	if dis.enable {
-		fmt.Println("Discarder: drop the uplayer data")
-	} else {
-		dis.lower.OnUpperData(context)
-	}
+	dis.lower.OnUpperData(context)
 }
 
 // OnLowerData ...

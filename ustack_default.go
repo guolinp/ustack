@@ -38,11 +38,11 @@ func (c *DefaultUStackContext) SetOption(name string, value interface{}) Context
 }
 
 // GetOption ...
-func (c *DefaultUStackContext) GetOption(name string) (interface{}, bool) {
+func (c *DefaultUStackContext) GetOption(name string) interface{} {
 	if value, ok := c.options[name]; ok {
-		return value, true
+		return value
 	}
-	return nil, false
+	return nil
 }
 
 // SetCacheData ...

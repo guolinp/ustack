@@ -39,9 +39,8 @@ func (gc *GenericCodec) OnUpperData(context Context) {
 			return
 		}
 
-		message, ok := context.GetOption("message")
-
-		if message == nil || !ok {
+		message := context.GetOption("message")
+		if message == nil {
 			fmt.Println("GenericCodec: invalid message data")
 			return
 		}

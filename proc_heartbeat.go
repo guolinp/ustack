@@ -148,31 +148,22 @@ func (hb *Heartbeat) OnEvent(event Event) {
 
 // Run ...
 func (hb *Heartbeat) Run() DataProcessor {
-	interval := hb.GetOption("intervalInSecond")
-	if interval != nil {
-		value, ok := interval.(int)
-		if ok {
-			hb.intervalInSecond = value
-			fmt.Println("Heartbeat: option intervalInSecond", hb.intervalInSecond)
-		}
+	interval, exists := OptionParseInt(hb.GetOption("intervalInSecond"), hb.intervalInSecond)
+	hb.intervalInSecond = interval
+	if exists {
+		fmt.Println("Heartbeat: option intervalInSecond:", hb.intervalInSecond)
 	}
 
-	timeout := hb.GetOption("timeoutInSecond")
-	if timeout != nil {
-		value, ok := timeout.(int)
-		if ok {
-			hb.timeoutInSecond = value
-			fmt.Println("Heartbeat: option timeoutInSecond", hb.timeoutInSecond)
-		}
+	timeout, exists := OptionParseInt(hb.GetOption("timeoutInSecond"), hb.timeoutInSecond)
+	hb.timeoutInSecond = timeout
+	if exists {
+		fmt.Println("Heartbeat: option timeoutInSecond:", hb.timeoutInSecond)
 	}
 
-	closeOnLost := hb.GetOption("closeOnLost")
-	if closeOnLost != nil {
-		value, ok := closeOnLost.(bool)
-		if ok {
-			hb.closeOnLost = value
-			fmt.Println("Heartbeat: option closeOnLost", hb.closeOnLost)
-		}
+	closeOnLost, exists := OptionParseBool(hb.GetOption("closeOnLost"), hb.closeOnLost)
+	hb.closeOnLost = closeOnLost
+	if exists {
+		fmt.Println("Heartbeat: option closeOnLost:", hb.timeoutInSecond)
 	}
 
 	go func() {
@@ -182,5 +173,5 @@ func (hb *Heartbeat) Run() DataProcessor {
 		}
 	}()
 
-	return hb.where
+	return hb
 }

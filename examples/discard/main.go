@@ -28,7 +28,6 @@ func client() {
 						}
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
-		AppendDataProcessor(ustack.NewDiscarder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -40,6 +39,7 @@ func client() {
 func server() {
 	ustack.NewUStack().
 		SetName("Server").
+		AppendDataProcessor(ustack.NewDiscarder()).
 		SetTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).

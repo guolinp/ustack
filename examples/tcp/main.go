@@ -19,7 +19,7 @@ func client() {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
 								for {
-									time.Sleep(time.Millisecond * 1000)
+									time.Sleep(time.Millisecond)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234567890"))
 								}
 							}()

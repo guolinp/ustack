@@ -36,26 +36,17 @@ func NewUpperDeck() DataProcessor {
 
 // OnLowerData ...
 func (ud *UpperDeck) OnLowerData(context Context) {
-	var session byte = 0
-	sessionItf, ok := context.GetOption("session")
-	if ok {
-		sessionByte, ok := sessionItf.(byte)
-		if ok {
-			session = sessionByte
-		}
+	message := context.GetOption("message")
+	if message == nil {
+		return
 	}
+
+	session, _ := OptionParseByte(context.GetOption("session"), 0)
 
 	ep := ud.findEndPoint(session)
-	if ep == nil {
-		return
+	if ep != nil {
+		ep.GetRxChannel() <- NewEndPointData(context.GetConnection(), message)
 	}
-
-	message, ok := context.GetOption("message")
-	if !ok {
-		return
-	}
-
-	ep.GetRxChannel() <- NewEndPointData(context.GetConnection(), message)
 }
 
 // Run ...
