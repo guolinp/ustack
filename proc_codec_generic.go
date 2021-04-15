@@ -20,7 +20,7 @@ type DecoderFn func(r io.Reader) (message interface{}, err error)
 
 // GenericCodec ...
 type GenericCodec struct {
-	Base
+	ProcBase
 	encoder EncoderFn
 	decoder DecoderFn
 }
@@ -28,7 +28,7 @@ type GenericCodec struct {
 // NewGenericCodec ...
 func NewGenericCodec(init InitFn, encoder EncoderFn, decoder DecoderFn) DataProcessor {
 	gc := &GenericCodec{
-		Base:    NewBaseInstance("GenericCodec"),
+		ProcBase:    NewProcBaseInstance("GenericCodec"),
 		encoder: encoder,
 		decoder: decoder,
 	}
@@ -37,7 +37,7 @@ func NewGenericCodec(init InitFn, encoder EncoderFn, decoder DecoderFn) DataProc
 		init()
 	}
 
-	return gc.Base.SetWhere(gc)
+	return gc.ProcBase.SetWhere(gc)
 }
 
 // OnUpperData ...

@@ -12,17 +12,17 @@ import (
 
 // GOBCodec ...
 type GOBCodec struct {
-	Base
+	ProcBase
 	objectType reflect.Type
 }
 
 // NewGOBCodec ...
 func NewGOBCodec(t reflect.Type) DataProcessor {
 	g := &GOBCodec{
-		Base:       NewBaseInstance("GOBCodec"),
+		ProcBase:       NewProcBaseInstance("GOBCodec"),
 		objectType: t,
 	}
-	return g.Base.SetWhere(g)
+	return g.ProcBase.SetWhere(g)
 }
 
 // OnUpperData ...

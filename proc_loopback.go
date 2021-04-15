@@ -8,15 +8,15 @@ import "fmt"
 
 // Loopback ...
 type Loopback struct {
-	Base
+	ProcBase
 }
 
 // NewLoopback returns a new instance
 func NewLoopback() DataProcessor {
 	lb := &Loopback{
-		NewBaseInstance("Loopback"),
+		NewProcBaseInstance("Loopback"),
 	}
-	return lb.Base.SetWhere(lb)
+	return lb.ProcBase.SetWhere(lb)
 }
 
 // OnUpperData sends back the message

@@ -17,7 +17,7 @@ const (
 
 // Heartbeat ...
 type Heartbeat struct {
-	Base
+	ProcBase
 	intervalInSecond int
 	timeoutInSecond  int
 	closeOnLost      bool
@@ -28,13 +28,13 @@ type Heartbeat struct {
 // NewHeartbeat ...
 func NewHeartbeat() DataProcessor {
 	hb := &Heartbeat{
-		Base:             NewBaseInstance("Heartbeat"),
+		ProcBase:         NewProcBaseInstance("Heartbeat"),
 		intervalInSecond: 1,
 		timeoutInSecond:  30,
 		closeOnLost:      true,
 		monitors:         make(map[TransportConnection]time.Time, 16),
 	}
-	return hb.Base.SetWhere(hb)
+	return hb.ProcBase.SetWhere(hb)
 }
 
 // updateMonitor ...

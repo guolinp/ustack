@@ -8,15 +8,15 @@ import "fmt"
 
 // LowerDeck manages transports
 type LowerDeck struct {
-	Base
+	ProcBase
 }
 
 // NewLowerDeck returns a new instance
 func NewLowerDeck() DataProcessor {
 	ld := &LowerDeck{
-		NewBaseInstance("LowerDeck"),
+		NewProcBaseInstance("LowerDeck"),
 	}
-	return ld.Base.SetWhere(ld)
+	return ld.ProcBase.SetWhere(ld)
 }
 
 func (ld *LowerDeck) closeConnection(c TransportConnection) {

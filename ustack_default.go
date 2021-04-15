@@ -60,6 +60,7 @@ func (c *DefaultUStackContext) GetBuffer() *UBuf {
 type DefaultUStack struct {
 	name       string
 	options    map[string]interface{}
+	features   []Feature
 	endpoints  []EndPoint
 	transports []Transport
 	upperDeck  DataProcessor
@@ -74,6 +75,7 @@ func NewUStack() UStack {
 	return &DefaultUStack{
 		name:       "UStack",
 		options:    make(map[string]interface{}),
+		features:   nil,
 		endpoints:  nil,
 		transports: nil,
 		upperDeck:  nil,
@@ -134,6 +136,27 @@ func (u *DefaultUStack) GetOption(name string) interface{} {
 		return value
 	}
 	return nil
+}
+
+// AddFeature ...
+func (u *DefaultUStack) AddFeature(feature Feature) UStack {
+	u.features = append(u.features, feature)
+	return u
+}
+
+// GetFeature ...
+func (u *DefaultUStack) GetFeature(name string) Feature {
+	for _, feature := range u.features {
+		if feature.GetName() == name {
+			return feature
+		}
+	}
+	return nil
+}
+
+// GetFeatures ...
+func (u *DefaultUStack) GetFeatures() []Feature {
+	return u.features
 }
 
 // AddEndPoint ...
@@ -200,10 +223,17 @@ func (u *DefaultUStack) PublishEvent(event Event) UStack {
 // Run ...
 func (u *DefaultUStack) Run() UStack {
 	u.build()
+
+	for _, ft := range u.features {
+		ft.Run()
+	}
+
 	u.upperDeck.Run()
+
 	for _, dp := range u.processors {
 		dp.Run()
 	}
+
 	u.lowerDeck.Run()
 
 	for _, tp := range u.transports {

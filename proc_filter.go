@@ -8,15 +8,15 @@ import "fmt"
 
 // Filter ...
 type Filter struct {
-	Base
+	ProcBase
 }
 
 // NewFilter ...
 func NewFilter() DataProcessor {
 	filter := &Filter{
-		NewBaseInstance("Filter"),
+		NewProcBaseInstance("Filter"),
 	}
-	return filter.Base.SetWhere(filter)
+	return filter.ProcBase.SetWhere(filter)
 }
 
 // OnUpperData ...

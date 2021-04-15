@@ -17,7 +17,7 @@ const (
 
 // StatCounter ...
 type StatCounter struct {
-	Base
+	ProcBase
 	intervalInSecond int
 	txCounter        uint64
 	rxCounter        uint64
@@ -26,12 +26,12 @@ type StatCounter struct {
 // NewStatCounter ...
 func NewStatCounter() DataProcessor {
 	sc := &StatCounter{
-		Base:             NewBaseInstance("StatCounter"),
+		ProcBase:             NewProcBaseInstance("StatCounter"),
 		intervalInSecond: 0,
 		txCounter:        0,
 		rxCounter:        0,
 	}
-	return sc.Base.SetWhere(sc)
+	return sc.ProcBase.SetWhere(sc)
 }
 
 // GetOverhead returns the overhead

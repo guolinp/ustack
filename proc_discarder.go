@@ -8,15 +8,15 @@ import "fmt"
 
 // Discarder ...
 type Discarder struct {
-	Base
+	ProcBase
 }
 
 // NewDiscarder ...
 func NewDiscarder() DataProcessor {
 	dis := &Discarder{
-		NewBaseInstance("Discarder"),
+		NewProcBaseInstance("Discarder"),
 	}
-	return dis.Base.SetWhere(dis)
+	return dis.ProcBase.SetWhere(dis)
 }
 
 // OnUpperData ...

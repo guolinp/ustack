@@ -12,17 +12,17 @@ import (
 
 // JSONCodec ...
 type JSONCodec struct {
-	Base
+	ProcBase
 	objectType reflect.Type
 }
 
 // NewJSONCodec ...
 func NewJSONCodec(t reflect.Type) DataProcessor {
 	jc := &JSONCodec{
-		Base:       NewBaseInstance("JSONCodec"),
+		ProcBase:       NewProcBaseInstance("JSONCodec"),
 		objectType: t,
 	}
-	return jc.Base.SetWhere(jc)
+	return jc.ProcBase.SetWhere(jc)
 }
 
 // OnUpperData ...

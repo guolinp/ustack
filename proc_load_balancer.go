@@ -8,15 +8,15 @@ import "fmt"
 
 // LoadBalancer ...
 type LoadBalancer struct {
-	Base
+	ProcBase
 }
 
 // NewLoadBalancer ...
 func NewLoadBalancer() DataProcessor {
 	lb := &LoadBalancer{
-		NewBaseInstance("LoadBalancer"),
+		NewProcBaseInstance("LoadBalancer"),
 	}
-	return lb.Base.SetWhere(lb)
+	return lb.ProcBase.SetWhere(lb)
 }
 
 // OnUpperData ...

@@ -10,17 +10,17 @@ const FrameLengthFieldSizeInByte int = 2
 
 // FrameDecoder ...
 type FrameDecoder struct {
-	Base
+	ProcBase
 	cache *UBuf
 }
 
 // NewFrameDecoder ...
 func NewFrameDecoder() DataProcessor {
 	frm := &FrameDecoder{
-		Base:  NewBaseInstance("FrameDecoder"),
+		ProcBase:  NewProcBaseInstance("FrameDecoder"),
 		cache: nil,
 	}
-	return frm.Base.SetWhere(frm)
+	return frm.ProcBase.SetWhere(frm)
 }
 
 // GetOverhead returns the overhead

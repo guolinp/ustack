@@ -8,15 +8,15 @@ import "fmt"
 
 // Forwarder ...
 type Forwarder struct {
-	Base
+	ProcBase
 }
 
 // NewForwarder ...
 func NewForwarder() DataProcessor {
 	fwd := &Forwarder{
-		NewBaseInstance("Forwarder"),
+		NewProcBaseInstance("Forwarder"),
 	}
-	return fwd.Base.SetWhere(fwd)
+	return fwd.ProcBase.SetWhere(fwd)
 }
 
 // OnUpperData ...

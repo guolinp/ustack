@@ -22,6 +22,10 @@ type UStack interface {
 	SetOption(name string, value interface{}) UStack
 	GetOption(name string) interface{}
 
+	AddFeature(feature Feature) UStack
+	GetFeature(name string) Feature
+	GetFeatures() []Feature
+
 	AddEndPoint(ep EndPoint) UStack
 	GetEndPoint() []EndPoint
 

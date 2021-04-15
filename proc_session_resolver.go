@@ -6,15 +6,15 @@ package ustack
 
 // SessionResolver ...
 type SessionResolver struct {
-	Base
+	ProcBase
 }
 
 // NewSessionResolver ...
 func NewSessionResolver() DataProcessor {
 	sr := &SessionResolver{
-		NewBaseInstance("SessionResolver"),
+		NewProcBaseInstance("SessionResolver"),
 	}
-	return sr.Base.SetWhere(sr)
+	return sr.ProcBase.SetWhere(sr)
 }
 
 // GetOverhead ...

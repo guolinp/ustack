@@ -8,15 +8,15 @@ import "fmt"
 
 // Echo ...
 type Echo struct {
-	Base
+	ProcBase
 }
 
 // NewEcho ...
 func NewEcho() DataProcessor {
 	echo := &Echo{
-		NewBaseInstance("Echo"),
+		NewProcBaseInstance("Echo"),
 	}
-	return echo.Base.SetWhere(echo)
+	return echo.ProcBase.SetWhere(echo)
 }
 
 // OnUpperData ...

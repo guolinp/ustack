@@ -6,7 +6,7 @@ package ustack
 
 // UpperDeck manages endpoints
 type UpperDeck struct {
-	Base
+	ProcBase
 	endpoints []EndPoint
 }
 
@@ -26,10 +26,10 @@ func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
 // NewUpperDeck returns a new instance
 func NewUpperDeck() DataProcessor {
 	ud := &UpperDeck{
-		Base:      NewBaseInstance("UpperDeck"),
+		ProcBase:      NewProcBaseInstance("UpperDeck"),
 		endpoints: nil,
 	}
-	return ud.Base.SetWhere(ud)
+	return ud.ProcBase.SetWhere(ud)
 }
 
 // OnLowerData finds the endpoint with session and pass data

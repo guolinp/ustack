@@ -6,15 +6,15 @@ package ustack
 
 // BytesCodec ...
 type BytesCodec struct {
-	Base
+	ProcBase
 }
 
 // NewBytesCodec ...
 func NewBytesCodec() DataProcessor {
 	bc := &BytesCodec{
-		NewBaseInstance("BytesCodec"),
+		NewProcBaseInstance("BytesCodec"),
 	}
-	return bc.Base.SetWhere(bc)
+	return bc.ProcBase.SetWhere(bc)
 }
 
 // OnUpperData ...

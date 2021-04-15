@@ -8,15 +8,15 @@ import "fmt"
 
 // FlowController ...
 type FlowController struct {
-	Base
+	ProcBase
 }
 
 // NewFlowController ...
 func NewFlowController() DataProcessor {
 	fc := &FlowController{
-		NewBaseInstance("FlowController"),
+		NewProcBaseInstance("FlowController"),
 	}
-	return fc.Base.SetWhere(fc)
+	return fc.ProcBase.SetWhere(fc)
 }
 
 // OnUpperData ...
