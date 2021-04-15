@@ -8,80 +8,49 @@ import (
 	"ustack"
 )
 
+var statServerAddress1 string = "127.0.0.1:8800"
+var statServerAddress2 string = "127.0.0.1:8801"
+
 func client() {
 	ustack.NewUStack().
-		SetName("PeerClient").
-		AddEndPoint(
-			ustack.NewEndPoint("EP-Client", 0).
-				SetEventListener(
-					func(endpoint ustack.EndPoint, event ustack.Event) {
-						if event.Type == ustack.UStackEventNewConnection {
-							connection := event.Data.(ustack.TransportConnection)
-							go func() {
-								for {
-									time.Sleep(time.Millisecond * 400)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
-								}
-							}()
-						} else if event.Type == ustack.UStackEventConnectionClosed {
-							os.Exit(1)
-						}
-					})).
-		AppendDataProcessor(ustack.NewBytesCodec()).
+		SetName("tcpStatClient").
 		AppendDataProcessor(ustack.NewStatCounter().SetOption("Collect.IntervalInSecond", 2)).
 		AppendDataProcessor(ustack.NewFrameDecoder()).
 		AddTransport(
-			ustack.NewTCPTransport("tcpClient").
+			ustack.NewTCPTransport("tcpToStatServer1").
 				ForServer(false).
-				SetAddress("127.0.0.1:5555")).
+				SetAddress(statServerAddress1)).
 		AddTransport(
-			ustack.NewTCPTransport("tcpClientStat1").
+			ustack.NewTCPTransport("tcpToStatServer2").
 				ForServer(false).
-				SetAddress("127.0.0.1:5500")).
-		AddTransport(
-			ustack.NewTCPTransport("tcpClientStat2").
-				ForServer(false).
-				SetAddress("127.0.0.1:5501")).
+				SetAddress(statServerAddress2)).
 		Run()
 
 }
 
-func server() {
-	ustack.NewUStack().
-		SetName("PeerServer").
-		AddEndPoint(
-			ustack.NewEndPoint("EP-Server", 0).
-				SetEventListener(
-					func(endpoint ustack.EndPoint, event ustack.Event) {
-						if event.Type == ustack.UStackEventConnectionClosed {
-							os.Exit(1)
-						}
-					}).
-				SetDataListener(
-					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("Receive:", string(epd.GetData().([]byte)))
-					})).
-		AppendDataProcessor(ustack.NewBytesCodec()).
-		AppendDataProcessor(ustack.NewStatCounter()).
-		AppendDataProcessor(ustack.NewFrameDecoder()).
-		AddTransport(
-			ustack.NewTCPTransport("tcpServer").
-				ForServer(true).
-				SetAddress("127.0.0.1:5555")).
-		Run()
+func update() {
+	if len(os.Args) > 2 {
+		statServerAddress1 = os.Args[2]
+		fmt.Println("statServerAddress1:", statServerAddress1)
+	}
+
+	if len(os.Args) > 3 {
+		statServerAddress2 = os.Args[3]
+		fmt.Println("statServerAddress2:", statServerAddress1)
+	}
 }
 
 func main() {
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
-			"-s": server,
 			"-c": client,
 		}[os.Args[1]]; ok {
+			update()
 			fn()
 			time.Sleep(time.Second * 3600)
 			return
 		}
 	}
 
-	fmt.Println(os.Args[0], "<-s|-c|-h>")
+	fmt.Println(os.Args[0], "<-s|-c|-h> [statServerAddress1] [statServerAddress2]")
 }

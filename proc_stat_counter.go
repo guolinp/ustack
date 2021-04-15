@@ -117,10 +117,12 @@ func (sc *StatCounter) OnLowerData(context Context) {
 			// fmt.Printf("StatCounter: collect request received on connection: %s\n",
 			// 	context.GetConnection().GetName())
 			sc.response(context)
+			return
 		} else if tag == StatCounterSelfMessageResTag {
 			// fmt.Printf("StatCounter: collect response received on connection: %s\n",
 			// 	context.GetConnection().GetName())
 			sc.show(context)
+			return
 		} else {
 			sc.rxCounter++
 			// fmt.Println("StatCounter: rxCounter:", sc.rxCounter)
