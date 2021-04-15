@@ -6,13 +6,17 @@ package ustack
 
 import (
 	"fmt"
+	"io"
 )
 
-// EncoderFn does encode message to UBuf
-type EncoderFn func(message interface{}, ub *UBuf) error
+// Init does init
+type InitFn func()
 
-// EncoderFn does decode from UBuf to message
-type DecoderFn func(ub *UBuf) (interface{}, error)
+// EncoderFn does encode message to io.Writer
+type EncoderFn func(message interface{}, w io.Writer) error
+
+// EncoderFn does decode data from io.Reader to message
+type DecoderFn func(r io.Reader) (message interface{}, err error)
 
 // GenericCodec ...
 type GenericCodec struct {
@@ -22,12 +26,17 @@ type GenericCodec struct {
 }
 
 // NewGenericCodec ...
-func NewGenericCodec(encoder EncoderFn, decoder DecoderFn) DataProcessor {
+func NewGenericCodec(init InitFn, encoder EncoderFn, decoder DecoderFn) DataProcessor {
 	gc := &GenericCodec{
 		Base:    NewBaseInstance("GenericCodec"),
 		encoder: encoder,
 		decoder: decoder,
 	}
+
+	if init != nil {
+		init()
+	}
+
 	return gc.Base.SetWhere(gc)
 }
 
