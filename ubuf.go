@@ -310,19 +310,15 @@ func (ub *UBuf) Read(p []byte) (n int, err error) {
 
 // ReadFrom implements io.ReaderFrom interface
 func (ub *UBuf) ReadFrom(r io.Reader) (n int64, err error) {
-	size := ub.TailWritableLength()
-	if size <= 0 {
+	if ub.TailWritableLength() <= 0 {
 		return 0, nil
 	}
 
-	p := make([]byte, size)
-
-	length, err := r.Read(p)
+	length, err := r.Read(ub.data[ub.writerIndex:])
 	if err != nil {
 		return 0, err
 	}
 
-	length = copy(ub.data[ub.writerIndex:], p[:length])
 	ub.writerIndex += length
 
 	return int64(length), nil
