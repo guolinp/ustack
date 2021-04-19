@@ -69,6 +69,46 @@ func TestBadUBufAllocInvalidReserved(t *testing.T) {
 	UBufAllocWithHeadReserved(4, 5)
 }
 
+func TestUBufFrom(t *testing.T) {
+	ub := UBufFrom(nil)
+	if ub != nil {
+		t.Fatal("Unexpected returned value")
+	}
+
+	ub = UBufFromWithHeadReserved([]byte{1, 2, 3, 4}, -1)
+	if ub != nil {
+		t.Fatal("Unexpected returned value")
+	}
+
+	ub = UBufFromWithHeadReserved([]byte{1, 2, 3, 4}, 5)
+	if ub != nil {
+		t.Fatal("Unexpected returned value")
+	}
+
+	ub = UBufFrom([]byte{1, 2, 3, 4})
+
+	if ub.readerIndex != 0 || ub.writerIndex != 0 || ub.reserved != 0 {
+		t.Fatal("Failed to create ubuf from byte slice")
+	}
+
+	if ub.Capacity() != 4 {
+		t.Fatal("Unexpected data capacity")
+	}
+
+	ub = UBufFromWithHeadReserved([]byte{1, 2, 3, 4}, 2)
+	if ub == nil {
+		t.Fatal("Unexpected returned value")
+	}
+
+	if ub.readerIndex != 2 || ub.writerIndex != 2 || ub.reserved != 2 {
+		t.Fatal("Failed to create ubuf from byte slice")
+	}
+
+	if ub.Capacity() != 4 {
+		t.Fatal("Unexpected data capacity")
+	}
+}
+
 func TestReadWriteByte(t *testing.T) {
 	ub := UBufAllocWithHeadReserved(UBufCapacity, UBufReserved)
 

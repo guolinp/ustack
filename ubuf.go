@@ -33,6 +33,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync/atomic"
 )
 
 const (
@@ -48,24 +49,24 @@ const (
 )
 
 type uBufData struct {
-	refCount int
+	refCount int32
 	bytes    []byte
 }
 
 // UBuf is struct to manage buffer
 type UBuf struct {
-	reserved          int
-	readerIndex       int
-	writerIndex       int
-	data              *uBufData
-	shouldCopyOnWrite bool
+	reserved    int
+	readerIndex int
+	writerIndex int
+	data        *uBufData
+	copyOnWrite bool
 }
 
 // AllocWithHeadReserved returns UBuf instance or panic if invalid input given
 //   capacity: the max bytes that Ubuf manages
 //   reserved: bytes number of reserved in head space
 func UBufAllocWithHeadReserved(capacity int, reserved int) *UBuf {
-	if capacity <= 0 || reserved > capacity {
+	if capacity <= 0 || reserved < 0 || reserved > capacity {
 		log.Panicf("UBuf: bad intput, capacity: %d, reserved: %d\n", capacity, reserved)
 	}
 
@@ -77,7 +78,7 @@ func UBufAllocWithHeadReserved(capacity int, reserved int) *UBuf {
 			refCount: 1,
 			bytes:    make([]byte, capacity),
 		},
-		shouldCopyOnWrite: false,
+		copyOnWrite: false,
 	}
 }
 
@@ -87,6 +88,35 @@ func UBufAlloc(capacity int) *UBuf {
 	return UBufAllocWithHeadReserved(capacity, 0)
 }
 
+// UBufFromWithHeadReserved use the user byte slice as buffer data
+func UBufFromWithHeadReserved(data []byte, reserved int) *UBuf {
+	if data == nil {
+		return nil
+	}
+
+	capacity := cap(data)
+	if capacity <= 0 || reserved < 0 || reserved > capacity {
+		return nil
+	}
+
+	return &UBuf{
+		reserved:    reserved,
+		readerIndex: reserved,
+		writerIndex: reserved,
+		data: &uBufData{
+			refCount: 1,
+			bytes:    data,
+		},
+		copyOnWrite: false,
+	}
+}
+
+// UBufFrom is shortcut version of UBufAllocFromWithHeadReserved
+// Do not reserve room in head space
+func UBufFrom(data []byte) *UBuf {
+	return UBufFromWithHeadReserved(data, 0)
+}
+
 // UBufMakeSnapshot creates a snapshot from given UBuf
 func UBufMakeSnapshot(ub *UBuf, whichType int) *UBuf {
 	if ub == nil {
@@ -94,11 +124,11 @@ func UBufMakeSnapshot(ub *UBuf, whichType int) *UBuf {
 	}
 
 	newub := &UBuf{
-		reserved:          ub.reserved,
-		readerIndex:       ub.readerIndex,
-		writerIndex:       ub.writerIndex,
-		data:              ub.data,
-		shouldCopyOnWrite: false,
+		reserved:    ub.reserved,
+		readerIndex: ub.readerIndex,
+		writerIndex: ub.writerIndex,
+		data:        ub.data,
+		copyOnWrite: false,
 	}
 
 	// every snapshot could change the buffer data
@@ -107,9 +137,9 @@ func UBufMakeSnapshot(ub *UBuf, whichType int) *UBuf {
 	}
 
 	if whichType == UBufSnapshotTypeCopyOnWrite {
-		ub.shouldCopyOnWrite = true
-		ub.data.refCount += 1
-		newub.shouldCopyOnWrite = true
+		atomic.AddInt32(&ub.data.refCount, 1)
+		ub.copyOnWrite = true
+		newub.copyOnWrite = true
 		return newub
 	}
 
@@ -130,23 +160,23 @@ func UBufMakeSnapshot(ub *UBuf, whichType int) *UBuf {
 
 // resolveCopyOnWriteIfNeed handles snapshot stuffs
 func (ub *UBuf) resolveCopyOnWriteIfNeed() {
-	if !ub.shouldCopyOnWrite {
+	if !ub.copyOnWrite {
 		return
 	}
 
 	// clear flag
-	ub.shouldCopyOnWrite = false
+	ub.copyOnWrite = false
 
 	// no snapshot reference this the buffer data
 	// resue the data
-	if ub.data.refCount == 1 {
+	if atomic.LoadInt32(&ub.data.refCount) == 1 {
 		return
 	}
 
 	// buffer data is referenced by some snapshot(s)
 
 	// decrease the count
-	ub.data.refCount -= 1
+	atomic.AddInt32(&ub.data.refCount, -1)
 
 	// make buffer data copy
 	data := &uBufData{
