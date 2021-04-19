@@ -30,16 +30,35 @@ package ustack
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 )
 
+const (
+	// reference the source data, may be shared by lots of snapshots
+	// less resource and quickly but not safe
+	UBufSnapshotTypeReference int = iota
+	// copy source data when source data is modified
+	// less resource, quickly and safe
+	UBufSnapshotTypeCopyOnWrite
+	// copy source data directly
+	// more resource and slowly but safe
+	UBufSnapshotTypeCopyDirectly
+)
+
+type uBufData struct {
+	refCount int
+	bytes    []byte
+}
+
 // UBuf is struct to manage buffer
 type UBuf struct {
-	reserved    int
-	readerIndex int
-	writerIndex int
-	data        []byte
+	reserved          int
+	readerIndex       int
+	writerIndex       int
+	data              *uBufData
+	shouldCopyOnWrite bool
 }
 
 // AllocWithHeadReserved returns UBuf instance or panic if invalid input given
@@ -47,14 +66,18 @@ type UBuf struct {
 //   reserved: bytes number of reserved in head space
 func UBufAllocWithHeadReserved(capacity int, reserved int) *UBuf {
 	if capacity <= 0 || reserved > capacity {
-		log.Panicf("UBuf bad intput: capacity: %d, reserved: %d\n", capacity, reserved)
+		log.Panicf("UBuf: bad intput, capacity: %d, reserved: %d\n", capacity, reserved)
 	}
 
 	return &UBuf{
 		reserved:    reserved,
 		readerIndex: reserved,
 		writerIndex: reserved,
-		data:        make([]byte, capacity),
+		data: &uBufData{
+			refCount: 1,
+			bytes:    make([]byte, capacity),
+		},
+		shouldCopyOnWrite: false,
 	}
 }
 
@@ -62,6 +85,80 @@ func UBufAllocWithHeadReserved(capacity int, reserved int) *UBuf {
 // Do not reserve room in head space
 func UBufAlloc(capacity int) *UBuf {
 	return UBufAllocWithHeadReserved(capacity, 0)
+}
+
+// UBufMakeSnapshot creates a snapshot from given UBuf
+func UBufMakeSnapshot(ub *UBuf, whichType int) *UBuf {
+	if ub == nil {
+		return nil
+	}
+
+	newub := &UBuf{
+		reserved:          ub.reserved,
+		readerIndex:       ub.readerIndex,
+		writerIndex:       ub.writerIndex,
+		data:              ub.data,
+		shouldCopyOnWrite: false,
+	}
+
+	// every snapshot could change the buffer data
+	if whichType == UBufSnapshotTypeReference {
+		return newub
+	}
+
+	if whichType == UBufSnapshotTypeCopyOnWrite {
+		ub.shouldCopyOnWrite = true
+		ub.data.refCount += 1
+		newub.shouldCopyOnWrite = true
+		return newub
+	}
+
+	if whichType == UBufSnapshotTypeCopyDirectly {
+		newub.data = &uBufData{
+			refCount: 1,
+			bytes:    make([]byte, ub.Capacity()),
+		}
+
+		copy(newub.data.bytes[newub.readerIndex:newub.writerIndex],
+			ub.data.bytes[ub.readerIndex:ub.writerIndex])
+
+		return newub
+	}
+
+	return nil
+}
+
+// resolveCopyOnWriteIfNeed handles snapshot stuffs
+func (ub *UBuf) resolveCopyOnWriteIfNeed() {
+	if !ub.shouldCopyOnWrite {
+		return
+	}
+
+	// clear flag
+	ub.shouldCopyOnWrite = false
+
+	// no snapshot reference this the buffer data
+	// resue the data
+	if ub.data.refCount == 1 {
+		return
+	}
+
+	// buffer data is referenced by some snapshot(s)
+
+	// decrease the count
+	ub.data.refCount -= 1
+
+	// make buffer data copy
+	data := &uBufData{
+		refCount: 1,
+		bytes:    make([]byte, ub.Capacity()),
+	}
+
+	fmt.Println("make COW")
+	copy(data.bytes[ub.readerIndex:ub.writerIndex], ub.data.bytes[ub.readerIndex:ub.writerIndex])
+
+	// update
+	ub.data = data
 }
 
 // Reset reinitializes the UBuf, data will be lost
@@ -72,7 +169,7 @@ func (ub *UBuf) Reset() {
 
 // Capacity returns the capacity
 func (ub *UBuf) Capacity() int {
-	return cap(ub.data)
+	return cap(ub.data.bytes)
 }
 
 // ReadableLength returns the length of readable data
@@ -87,7 +184,7 @@ func (ub *UBuf) HeadWritableLength() int {
 
 // TailWritableLength returns the length of writable data in free space
 func (ub *UBuf) TailWritableLength() int {
-	return cap(ub.data) - ub.writerIndex
+	return cap(ub.data.bytes) - ub.writerIndex
 }
 
 // Peek fills a byte slice with readable data, returns length of filled data or error
@@ -101,7 +198,7 @@ func (ub *UBuf) Peek(p []byte) (int, error) {
 		toPeek = len(p)
 	}
 
-	toPeek = copy(p[:toPeek], ub.data[ub.readerIndex:])
+	toPeek = copy(p[:toPeek], ub.data.bytes[ub.readerIndex:])
 
 	if toPeek < len(p) {
 		return toPeek, errors.New("UBuf has not more data to peek")
@@ -115,7 +212,7 @@ func (ub *UBuf) PeekByte() (byte, error) {
 	if ub.ReadableLength() < 1 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return ub.data[ub.readerIndex], nil
+	return ub.data.bytes[ub.readerIndex], nil
 }
 
 // PeekU16 returns a uint16 value with readable data or error
@@ -138,7 +235,7 @@ func (ub *UBuf) PeekU16BE() (uint16, error) {
 	if ub.ReadableLength() < 2 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.BigEndian.Uint16(ub.data[ub.readerIndex : ub.readerIndex+2]), nil
+	return binary.BigEndian.Uint16(ub.data.bytes[ub.readerIndex : ub.readerIndex+2]), nil
 }
 
 // PeekU32BE returns a big endian uint32 value with readable data or error
@@ -146,7 +243,7 @@ func (ub *UBuf) PeekU32BE() (uint32, error) {
 	if ub.ReadableLength() < 4 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.BigEndian.Uint32(ub.data[ub.readerIndex : ub.readerIndex+4]), nil
+	return binary.BigEndian.Uint32(ub.data.bytes[ub.readerIndex : ub.readerIndex+4]), nil
 }
 
 // PeekU64BE returns a big endian uint64 value with readable data or error
@@ -154,7 +251,7 @@ func (ub *UBuf) PeekU64BE() (uint64, error) {
 	if ub.ReadableLength() < 8 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.BigEndian.Uint64(ub.data[ub.readerIndex : ub.readerIndex+8]), nil
+	return binary.BigEndian.Uint64(ub.data.bytes[ub.readerIndex : ub.readerIndex+8]), nil
 }
 
 // PeekU16LE returns a little endian uint16 value with readable data or error
@@ -162,7 +259,7 @@ func (ub *UBuf) PeekU16LE() (uint16, error) {
 	if ub.ReadableLength() < 2 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.LittleEndian.Uint16(ub.data[ub.readerIndex : ub.readerIndex+2]), nil
+	return binary.LittleEndian.Uint16(ub.data.bytes[ub.readerIndex : ub.readerIndex+2]), nil
 }
 
 // PeekU32LE returns a little endian uint32 value with readable data or error
@@ -170,7 +267,7 @@ func (ub *UBuf) PeekU32LE() (uint32, error) {
 	if ub.ReadableLength() < 4 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.LittleEndian.Uint32(ub.data[ub.readerIndex : ub.readerIndex+4]), nil
+	return binary.LittleEndian.Uint32(ub.data.bytes[ub.readerIndex : ub.readerIndex+4]), nil
 }
 
 // PeekU64LE returns a little endian uint64 value with readable data or error
@@ -178,7 +275,7 @@ func (ub *UBuf) PeekU64LE() (uint64, error) {
 	if ub.ReadableLength() < 8 {
 		return 0, errors.New("UBuf is not enough value to peek")
 	}
-	return binary.LittleEndian.Uint64(ub.data[ub.readerIndex : ub.readerIndex+8]), nil
+	return binary.LittleEndian.Uint64(ub.data.bytes[ub.readerIndex : ub.readerIndex+8]), nil
 }
 
 // WriteByte implements io.ByteWriter interface
@@ -187,7 +284,9 @@ func (ub *UBuf) WriteByte(c byte) error {
 		return errors.New("UBuf is full")
 	}
 
-	ub.data[ub.writerIndex] = c
+	ub.resolveCopyOnWriteIfNeed()
+
+	ub.data.bytes[ub.writerIndex] = c
 	ub.writerIndex++
 
 	return nil
@@ -200,11 +299,13 @@ func (ub *UBuf) Write(p []byte) (n int, err error) {
 		return 0, errors.New("UBuf is full")
 	}
 
+	ub.resolveCopyOnWriteIfNeed()
+
 	if toWrite > len(p) {
 		toWrite = len(p)
 	}
 
-	toWrite = copy(ub.data[ub.writerIndex:], p[:toWrite])
+	toWrite = copy(ub.data.bytes[ub.writerIndex:], p[:toWrite])
 	ub.writerIndex += toWrite
 
 	if toWrite < len(p) {
@@ -220,7 +321,7 @@ func (ub *UBuf) WriteTo(w io.Writer) (n int64, err error) {
 		return 0, nil
 	}
 
-	written, err := w.Write(ub.data[ub.readerIndex:ub.writerIndex])
+	written, err := w.Write(ub.data.bytes[ub.readerIndex:ub.writerIndex])
 	if err != nil {
 		return int64(written), err
 	}
@@ -247,31 +348,55 @@ func (ub *UBuf) WriteU64(value uint64) error {
 
 // WriteU16BE writes big endian uint16 data into data space
 func (ub *UBuf) WriteU16BE(value uint16) error {
+	if ub.TailWritableLength() < 2 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.BigEndian, value)
 }
 
 // WriteU32BE writes big endian uint32 data into data space
 func (ub *UBuf) WriteU32BE(value uint32) error {
+	if ub.TailWritableLength() < 4 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.BigEndian, value)
 }
 
 // WriteU64BE writes big endian uint64 data into data space
 func (ub *UBuf) WriteU64BE(value uint64) error {
+	if ub.TailWritableLength() < 8 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.BigEndian, value)
 }
 
 // WriteU16LE writes little endian uint16 data into data space
 func (ub *UBuf) WriteU16LE(value uint16) error {
+	if ub.TailWritableLength() < 2 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.LittleEndian, value)
 }
 
 // WriteU32LE writes little endian uint32 data into data space
 func (ub *UBuf) WriteU32LE(value uint32) error {
+	if ub.TailWritableLength() < 4 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.LittleEndian, value)
 }
 
 // WriteU64LE writes little endian uint64 data into data space
 func (ub *UBuf) WriteU64LE(value uint64) error {
+	if ub.TailWritableLength() < 8 {
+		return errors.New("UBuf: no more free data space")
+	}
+
 	return binary.Write(ub, binary.LittleEndian, value)
 }
 
@@ -281,7 +406,7 @@ func (ub *UBuf) ReadByte() (byte, error) {
 		return 0, errors.New("UBuf is empty")
 	}
 
-	b := ub.data[ub.readerIndex]
+	b := ub.data.bytes[ub.readerIndex]
 	ub.readerIndex++
 
 	return b, nil
@@ -298,7 +423,7 @@ func (ub *UBuf) Read(p []byte) (n int, err error) {
 		toRead = len(p)
 	}
 
-	toRead = copy(p[:toRead], ub.data[ub.readerIndex:])
+	toRead = copy(p[:toRead], ub.data.bytes[ub.readerIndex:])
 	ub.readerIndex += toRead
 
 	if toRead < len(p) {
@@ -314,7 +439,9 @@ func (ub *UBuf) ReadFrom(r io.Reader) (n int64, err error) {
 		return 0, nil
 	}
 
-	length, err := r.Read(ub.data[ub.writerIndex:])
+	ub.resolveCopyOnWriteIfNeed()
+
+	length, err := r.Read(ub.data.bytes[ub.writerIndex:])
 	if err != nil {
 		return 0, err
 	}
@@ -341,6 +468,10 @@ func (ub *UBuf) ReadU64() (uint64, error) {
 
 // ReadU16BE returns big endian uint16 data or error
 func (ub *UBuf) ReadU16BE() (uint16, error) {
+	if ub.ReadableLength() < 2 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint16
 	err := binary.Read(ub, binary.BigEndian, &value)
 	return value, err
@@ -348,6 +479,10 @@ func (ub *UBuf) ReadU16BE() (uint16, error) {
 
 // ReadU32BE returns big endian uint32 data or error
 func (ub *UBuf) ReadU32BE() (uint32, error) {
+	if ub.ReadableLength() < 4 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint32
 	err := binary.Read(ub, binary.BigEndian, &value)
 	return value, err
@@ -355,6 +490,10 @@ func (ub *UBuf) ReadU32BE() (uint32, error) {
 
 // ReadU64BE returns big endian uint64 data or error
 func (ub *UBuf) ReadU64BE() (uint64, error) {
+	if ub.ReadableLength() < 8 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint64
 	err := binary.Read(ub, binary.BigEndian, &value)
 	return value, err
@@ -362,6 +501,10 @@ func (ub *UBuf) ReadU64BE() (uint64, error) {
 
 // ReadU16LE returns little endian uint16 data or error
 func (ub *UBuf) ReadU16LE() (uint16, error) {
+	if ub.ReadableLength() < 2 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint16
 	err := binary.Read(ub, binary.LittleEndian, &value)
 	return value, err
@@ -369,6 +512,10 @@ func (ub *UBuf) ReadU16LE() (uint16, error) {
 
 // ReadU32LE returns little endian uint32 data or error
 func (ub *UBuf) ReadU32LE() (uint32, error) {
+	if ub.ReadableLength() < 4 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint32
 	err := binary.Read(ub, binary.LittleEndian, &value)
 	return value, err
@@ -376,6 +523,10 @@ func (ub *UBuf) ReadU32LE() (uint32, error) {
 
 // ReadU64LE returns little endian uint64 data or error
 func (ub *UBuf) ReadU64LE() (uint64, error) {
+	if ub.ReadableLength() < 8 {
+		return 0, errors.New("UBuf: no more data")
+	}
+
 	var value uint64
 	err := binary.Read(ub, binary.LittleEndian, &value)
 	return value, err
@@ -408,6 +559,11 @@ func (ub *UBuf) writeHead(dataSize int, fn func() error) error {
 // WriteHeadByte writes one byte into head space
 func (ub *UBuf) WriteHeadByte(value byte) error {
 	return ub.writeHead(1, func() error { return ub.WriteByte(value) })
+}
+
+// WriteHeadBytes some bytes into head space
+func (ub *UBuf) WriteHeadBytes(bytes []byte) error {
+	return ub.writeHead(len(bytes), func() error { _, err := ub.Write(bytes); return err })
 }
 
 // WriteHeadU16 writes uint16 data into head space

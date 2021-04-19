@@ -378,6 +378,82 @@ func TestReadWriteUxx(t *testing.T) {
 	if u64 != 0x1357246875318642 {
 		t.Fatal("Unexpected read data")
 	}
+
+	ub.Reset()
+
+	if _, err := ub.ReadU16(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU32(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU64(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU16BE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU32BE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU64BE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU16LE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU32LE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if _, err := ub.ReadU64LE(); err == nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	ub = UBufAllocWithHeadReserved(UBufCapacity, UBufCapacity)
+
+	if err := ub.WriteU16(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU32(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU64(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU16BE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU32BE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU64BE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU16LE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU32LE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
+
+	if err := ub.WriteU64LE(1); err == nil {
+		t.Fatal("Unexpected Write result")
+	}
 }
 
 func TestReadWriteUxxBE(t *testing.T) {
@@ -478,6 +554,67 @@ func TestReadWriteHeadUxxNoSpace(t *testing.T) {
 	err := ub.WriteHeadByte(1)
 	if err == nil {
 		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU16(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU32(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU64(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU16BE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU32BE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU64BE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU16LE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU32LE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	if err := ub.WriteHeadU64LE(1); err == nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+}
+
+func TestReadWriteHeadBytes(t *testing.T) {
+	ub := UBufAllocWithHeadReserved(UBufCapacity, UBufCapacity)
+
+	err := ub.WriteHeadBytes([]byte{1, 2})
+	if err != nil {
+		t.Fatal("Unexpected WriteHead result")
+	}
+
+	bytes := make([]byte, 2)
+
+	n, err := ub.Read(bytes)
+
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if n != 2 {
+		t.Fatal("Unexpected read result")
+	}
+
+	if bytes[0] != 1 && bytes[1] != 2 {
+		t.Fatal("Unexpected read result")
 	}
 }
 
@@ -872,5 +1009,146 @@ func TestPeekUxxLE(t *testing.T) {
 
 	if u64 != 0x1357246875318642 {
 		t.Fatal("Unexpected peek data")
+	}
+}
+
+func TestSnapshotReference(t *testing.T) {
+	if UBufMakeSnapshot(nil, 999) != nil {
+		t.Fatal("Unexpected returned snap")
+	}
+
+	ub := UBufAllocWithHeadReserved(UBufCapacity, UBufReserved)
+	ub.WriteU16(0x1234)
+
+	if UBufMakeSnapshot(ub, 999) != nil {
+		t.Fatal("Unexpected returned snap")
+	}
+
+	snap := UBufMakeSnapshot(ub, UBufSnapshotTypeReference)
+
+	u16, err := snap.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x1234 {
+		t.Fatal("Unexpected read data")
+	}
+
+	ub.WriteU16(0x5678)
+
+	_, err = snap.ReadU16()
+	if err == nil {
+		t.Fatal("Unexpected read result")
+	}
+}
+
+func TestSnapshotCopyOnWrite(t *testing.T) {
+	ub := UBufAllocWithHeadReserved(UBufCapacity, UBufReserved)
+	ub.WriteU16(0x1234)
+
+	snap := UBufMakeSnapshot(ub, UBufSnapshotTypeCopyOnWrite)
+
+	if &snap.data.bytes != &ub.data.bytes {
+		t.Fatal("did copy")
+	}
+
+	snap.WriteU16(0x5678)
+
+	ub.WriteU16(0x8765)
+
+	u16, err := snap.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x1234 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = snap.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x5678 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = ub.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x1234 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = ub.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x8765 {
+		t.Fatal("Unexpected read data")
+	}
+
+	if &snap.data.bytes == &ub.data.bytes {
+		t.Fatal("did not copy on write")
+	}
+}
+
+func TestSnapshotCopyDriectly(t *testing.T) {
+	ub := UBufAllocWithHeadReserved(UBufCapacity, UBufReserved)
+	ub.WriteU16(0x1234)
+
+	snap := UBufMakeSnapshot(ub, UBufSnapshotTypeCopyDirectly)
+
+	if &snap.data.bytes == &ub.data.bytes {
+		t.Fatal("did not copy directly")
+	}
+
+	snap.WriteU16(0x5678)
+
+	ub.WriteU16(0x8765)
+
+	u16, err := snap.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x1234 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = snap.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x5678 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = ub.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x1234 {
+		t.Fatal("Unexpected read data")
+	}
+
+	u16, err = ub.ReadU16()
+	if err != nil {
+		t.Fatal("Unexpected read result")
+	}
+
+	if u16 != 0x8765 {
+		t.Fatal("Unexpected read data")
+	}
+
+	if &snap.data.bytes == &ub.data.bytes {
+		t.Fatal("did not copy on write")
 	}
 }
