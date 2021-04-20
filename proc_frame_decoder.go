@@ -4,21 +4,26 @@
 
 package ustack
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
-const FrameLengthFieldSizeInByte int = 2
+const FrameLengthFieldSizeInByte int = 4
 
 // FrameDecoder ...
 type FrameDecoder struct {
 	ProcBase
-	cache *UBuf
+	cacheCapacity int
+	cache         *UBuf
 }
 
 // NewFrameDecoder ...
 func NewFrameDecoder() DataProcessor {
 	frm := &FrameDecoder{
-		ProcBase:  NewProcBaseInstance("FrameDecoder"),
-		cache: nil,
+		ProcBase:      NewProcBaseInstance("FrameDecoder"),
+		cacheCapacity: 1024,
+		cache:         nil,
 	}
 	return frm.ProcBase.SetWhere(frm)
 }
@@ -37,7 +42,7 @@ func (frm *FrameDecoder) OnUpperData(context Context) {
 		}
 
 		// add frame length in head space
-		ub.WriteHeadU16BE(uint16(ub.ReadableLength()))
+		ub.WriteHeadU32BE(uint32(ub.ReadableLength()))
 	}
 
 	frm.lower.OnUpperData(context)
@@ -60,14 +65,14 @@ func (frm *FrameDecoder) handleCurrentData(context Context, ub *UBuf) {
 			return
 		}
 
-		expectedLength, err := ub.PeekU16BE()
+		expectedLength, err := ub.PeekU32BE()
 		if err != nil {
 			// bad buffer, discard it
 			frm.cache.Reset()
 			return
 		}
 
-		actuallyLength := uint16(ub.ReadableLength())
+		actuallyLength := uint32(ub.ReadableLength())
 
 		// not a complete frame, cache the data
 		if expectedLength > actuallyLength {
@@ -78,7 +83,7 @@ func (frm *FrameDecoder) handleCurrentData(context Context, ub *UBuf) {
 		// just one frame, need not to alloc new UBuf
 		if expectedLength == actuallyLength {
 			// drop size-field-data by dummy reading
-			ub.ReadU16BE()
+			ub.ReadU32BE()
 
 			context.SetBuffer(ub)
 			frm.upper.OnLowerData(context)
@@ -90,7 +95,7 @@ func (frm *FrameDecoder) handleCurrentData(context Context, ub *UBuf) {
 		newUbuf := UBufAlloc(int(expectedLength))
 
 		// drop size-field-data by dummy reading
-		ub.ReadU16BE()
+		ub.ReadU32BE()
 
 		// fill the new buffer for uplayer
 		_, err = io.CopyN(newUbuf, ub, int64(expectedLength))
@@ -123,7 +128,7 @@ func (frm *FrameDecoder) handleCachedData(context Context, ub *UBuf) {
 			return
 		}
 
-		expectedLength, err := frm.cache.PeekU16BE()
+		expectedLength, err := frm.cache.PeekU32BE()
 		if err != nil {
 			// bad buffer, discard it
 			frm.cache.Reset()
@@ -139,7 +144,7 @@ func (frm *FrameDecoder) handleCachedData(context Context, ub *UBuf) {
 		newUbuf := UBufAlloc(int(expectedLength))
 
 		// drop size-field-data by dummy reading
-		frm.cache.ReadU16BE()
+		frm.cache.ReadU32BE()
 
 		// fill the new buffer for uplayer
 		_, err = io.CopyN(newUbuf, frm.cache, int64(expectedLength))
@@ -176,7 +181,15 @@ func (frm *FrameDecoder) OnLowerData(context Context) {
 
 // Run ...
 func (frm *FrameDecoder) Run() DataProcessor {
-	// 2 * MTU is for the worst case
-	frm.cache = UBufAlloc(2 * frm.ustack.GetMTU())
+	cacheCapacity, exists := OptionParseInt(frm.GetOption("CacheCapacity"), 2*frm.ustack.GetMTU())
+
+	frm.cacheCapacity = cacheCapacity
+
+	if exists {
+		fmt.Println("FrameDecoder: option CacheCapacity:", frm.cacheCapacity)
+	}
+
+	frm.cache = UBufAlloc(frm.cacheCapacity)
+
 	return frm
 }

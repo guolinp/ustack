@@ -14,7 +14,7 @@ func (ud *UpperDeck) build() {
 	ud.endpoints = ud.ustack.GetEndPoint()
 }
 
-func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
+func (ud *UpperDeck) findEndPoint(session int) EndPoint {
 	for _, ep := range ud.endpoints {
 		if ep.GetSession() == session {
 			return ep
@@ -26,7 +26,7 @@ func (ud *UpperDeck) findEndPoint(session byte) EndPoint {
 // NewUpperDeck returns a new instance
 func NewUpperDeck() DataProcessor {
 	ud := &UpperDeck{
-		ProcBase:      NewProcBaseInstance("UpperDeck"),
+		ProcBase:  NewProcBaseInstance("UpperDeck"),
 		endpoints: nil,
 	}
 	return ud.ProcBase.SetWhere(ud)
@@ -39,7 +39,7 @@ func (ud *UpperDeck) OnLowerData(context Context) {
 		return
 	}
 
-	session, _ := OptionParseByte(context.GetOption("session"), 0)
+	session, _ := OptionParseInt(context.GetOption("session"), 0)
 
 	ep := ud.findEndPoint(session)
 	if ep != nil {

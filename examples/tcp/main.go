@@ -34,11 +34,11 @@ func client() {
 					}).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("ACK:",epd.GetConnection().GetName(), string(epd.GetData().([]byte)))
+						fmt.Println("ACK:", epd.GetConnection().GetName(), string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewStatCounter()).
-		AppendDataProcessor(ustack.NewFrameDecoder()).
+		AppendDataProcessor(ustack.NewFrameDecoder().SetOption("CacheCapacity", 128)).
 		AddTransport(
 			ustack.NewTCPTransport("tcpDataClient").
 				ForServer(false).
@@ -71,7 +71,7 @@ func server() {
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewStatCounter()).
-		AppendDataProcessor(ustack.NewFrameDecoder()).
+		AppendDataProcessor(ustack.NewFrameDecoder().SetOption("CacheCapacity", 128)).
 		AddTransport(
 			ustack.NewTCPTransport("tcpDataServer").
 				ForServer(true).

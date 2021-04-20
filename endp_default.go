@@ -31,7 +31,7 @@ func (epd *DefaultEndPointData) GetData() interface{} {
 // DefaultEndPoint ...
 type DefaultEndPoint struct {
 	name          string
-	session       byte
+	session       int
 	txChannel     chan EndPointData
 	rxChannel     chan EndPointData
 	eventListener func(EndPoint, Event)
@@ -54,7 +54,7 @@ func (ep *DefaultEndPoint) autoReceive() {
 }
 
 // NewEndPoint ...
-func NewEndPoint(name string, session byte) EndPoint {
+func NewEndPoint(name string, session int) EndPoint {
 	return &DefaultEndPoint{
 		name:          name,
 		session:       session,
@@ -87,7 +87,7 @@ func (ep *DefaultEndPoint) GetName() string {
 }
 
 // GetPort ...
-func (ep *DefaultEndPoint) GetSession() byte {
+func (ep *DefaultEndPoint) GetSession() int {
 	return ep.session
 }
 

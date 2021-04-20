@@ -19,9 +19,9 @@ func client() {
 		}).
 		AppendDataProcessor(
 			ustack.NewHeartbeat().
-				SetOption("intervalInSecond", 10).
-				SetOption("timeoutInSecond", 3).
-				SetOption("closeOnLost", false).
+				SetOption("IntervalInSecond", 10).
+				SetOption("TimeoutInSecond", 3).
+				SetOption("CloseOnLost", false).
 				ForServer(false)).
 		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
@@ -41,9 +41,9 @@ func server() {
 		}).
 		AppendDataProcessor(
 			ustack.NewHeartbeat().
-				SetOption("intervalInSecond", 10).
-				SetOption("timeoutInSecond", 5).
-				SetOption("closeOnLost", true).
+				SetOption("IntervalInSecond", 10).
+				SetOption("TimeoutInSecond", 5).
+				SetOption("CloseOnLost", true).
 				ForServer(true)).
 		AddTransport(
 			ustack.NewTCPTransport("tcpServer").

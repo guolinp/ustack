@@ -26,7 +26,7 @@ type StatCounter struct {
 // NewStatCounter ...
 func NewStatCounter() DataProcessor {
 	sc := &StatCounter{
-		ProcBase:             NewProcBaseInstance("StatCounter"),
+		ProcBase:         NewProcBaseInstance("StatCounter"),
 		intervalInSecond: 0,
 		txCounter:        0,
 		rxCounter:        0,
@@ -163,7 +163,7 @@ func (sc *StatCounter) Run() DataProcessor {
 	interval, exists := OptionParseInt(sc.GetOption("Collect.IntervalInSecond"), sc.intervalInSecond)
 	sc.intervalInSecond = interval
 	if exists {
-		fmt.Println("StatCounter: option intervalInSecond:", sc.intervalInSecond)
+		fmt.Println("StatCounter: option Collect.IntervalInSecond:", sc.intervalInSecond)
 	}
 	return sc
 }

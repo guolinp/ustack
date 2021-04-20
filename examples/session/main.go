@@ -43,8 +43,9 @@ func client() {
 							os.Exit(1)
 						}
 					})).
-		AppendDataProcessor(ustack.NewBytesCodec().SetName("PR-In-Client")).
-		AppendDataProcessor(ustack.NewSessionResolver().SetName("PR-In-Client")).
+		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewSessionResolver()).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
@@ -81,6 +82,7 @@ func server() {
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
 		AppendDataProcessor(ustack.NewSessionResolver()).
+		AppendDataProcessor(ustack.NewFrameDecoder()).
 		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).

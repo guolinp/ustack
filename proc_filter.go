@@ -4,35 +4,60 @@
 
 package ustack
 
-import "fmt"
+type FilterFn func(context Context, toUpper bool) bool
 
 // Filter ...
 type Filter struct {
 	ProcBase
+	filterFn  []FilterFn
+	txCounter uint64
+	rxCounter uint64
 }
 
 // NewFilter ...
-func NewFilter() DataProcessor {
+func NewFilter(filterFn ...FilterFn) DataProcessor {
 	filter := &Filter{
-		NewProcBaseInstance("Filter"),
+		ProcBase:  NewProcBaseInstance("Filter"),
+		filterFn:  make([]FilterFn, 1),
+		txCounter: 0,
+		rxCounter: 0,
 	}
+
+	filter.filterFn = append(filter.filterFn, filterFn...)
+
 	return filter.ProcBase.SetWhere(filter)
+}
+
+// doFilter ...
+func (filter *Filter) doFilter(context Context, toUpper bool) bool {
+	for _, fn := range filter.filterFn {
+		if fn(context, toUpper) {
+			return true
+		}
+	}
+	return false
 }
 
 // OnUpperData ...
 func (filter *Filter) OnUpperData(context Context) {
 	if filter.enable {
-		fmt.Println("Filter: drop uplayer data")
-	} else {
-		filter.lower.OnUpperData(context)
+		if !filter.doFilter(context, false) {
+			filter.txCounter++
+			return
+		}
 	}
+
+	filter.lower.OnUpperData(context)
 }
 
 // OnLowerData ...
 func (filter *Filter) OnLowerData(context Context) {
 	if filter.enable {
-		fmt.Println("Filter: drop lowlayer data")
-	} else {
-		filter.upper.OnLowerData(context)
+		if !filter.doFilter(context, true) {
+			filter.rxCounter++
+			return
+		}
 	}
+
+	filter.upper.OnLowerData(context)
 }

@@ -13,7 +13,7 @@ type EndPointData interface {
 // EndPoint ...
 type EndPoint interface {
 	GetName() string
-	GetSession() byte
+	GetSession() int
 	SetDataListener(listener func(EndPoint, EndPointData)) EndPoint
 	GetTxChannel() chan EndPointData
 	GetRxChannel() chan EndPointData

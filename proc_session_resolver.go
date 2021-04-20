@@ -4,6 +4,8 @@
 
 package ustack
 
+const SessionFieldSizeInByte int = 4
+
 // SessionResolver ...
 type SessionResolver struct {
 	ProcBase
@@ -19,8 +21,8 @@ func NewSessionResolver() DataProcessor {
 
 // GetOverhead ...
 func (sr *SessionResolver) GetOverhead() int {
-	// for saving session byte
-	return 1
+	// for saving session field
+	return SessionFieldSizeInByte
 }
 
 // OnUpperData ...
@@ -31,9 +33,9 @@ func (sr *SessionResolver) OnUpperData(context Context) {
 			return
 		}
 
-		session, _ := OptionParseByte(context.GetOption("session"), 0)
+		session, _ := OptionParseInt(context.GetOption("session"), 0)
 
-		err := ub.WriteHeadByte(session)
+		err := ub.WriteHeadU32BE(uint32(session))
 		if err != nil {
 			return
 		}
@@ -50,12 +52,12 @@ func (sr *SessionResolver) OnLowerData(context Context) {
 			return
 		}
 
-		session, err := ub.ReadByte()
+		session, err := ub.ReadU32BE()
 		if err != nil {
 			return
 		}
 
-		context.SetOption("session", session)
+		context.SetOption("session", int(session))
 	}
 
 	sr.upper.OnLowerData(context)
