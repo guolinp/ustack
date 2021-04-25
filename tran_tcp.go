@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -36,14 +37,14 @@ func (c *TCPTransportConnection) GetName() string {
 // Read ...
 func (c *TCPTransportConnection) Read(p []byte) (n int, err error) {
 	if c.closed {
-		fmt.Println("connection is closed")
+		fmt.Println("read failed as connection", c.name, " is closed")
 		return 0, nil
 	}
 
 	n, err = c.conn.Read(p)
 	if err != nil {
 		if err != io.EOF {
-			fmt.Println("read error:", err)
+			fmt.Println("connection", c.name, "read failed:", err)
 		}
 	}
 
@@ -53,7 +54,7 @@ func (c *TCPTransportConnection) Read(p []byte) (n int, err error) {
 // Write ...
 func (c *TCPTransportConnection) Write(p []byte) (n int, err error) {
 	if c.closed {
-		fmt.Println("connection is closed")
+		fmt.Println("write failed as connection", c.name, " is closed")
 		return 0, nil
 	}
 
@@ -73,19 +74,120 @@ func (c *TCPTransportConnection) Closed() bool {
 
 // TCPTransport ...
 type TCPTransport struct {
-	name       string
-	address    string
-	forServer  bool
-	connection chan TransportConnection
+	name    string
+	options map[string]interface{}
+	sync.Mutex
+	address     string
+	isRunning   bool
+	forServer   bool
+	connections []TransportConnection
+	next        chan TransportConnection
+	// for server
+	listener net.Listener
+	// for client
+	maxRetryCount         int
+	retryIntervalInSecond int
 }
 
 // NewTCPTransport ...
 func NewTCPTransport(name string) Transport {
 	return &TCPTransport{
-		name:       name,
-		forServer:  true,
-		connection: make(chan TransportConnection, 16),
+		name:      name,
+		options:   make(map[string]interface{}),
+		isRunning: false,
+		forServer: true,
+		listener:  nil,
 	}
+}
+
+// parseOptions ...
+func (t *TCPTransport) parseOptions() {
+	retry, exists := OptionParseInt(t.GetOption("MaxRetryCount"), 180)
+	t.maxRetryCount = retry
+	if exists {
+		fmt.Println("TCPTransport: option MaxRetryCount:", t.maxRetryCount)
+	}
+
+	interval, exists := OptionParseInt(t.GetOption("RetryIntervalInSecond"), 1)
+	t.retryIntervalInSecond = interval
+	if exists {
+		fmt.Println("TCPTransport: option RetryIntervalInSecond:", t.retryIntervalInSecond)
+	}
+}
+
+// doInit ...
+func (t *TCPTransport) doInit() {
+	t.connections = make([]TransportConnection, 0)
+	t.next = make(chan TransportConnection, 16)
+}
+
+// saveConnections ...
+func (t *TCPTransport) saveConnection(tc TransportConnection) {
+	t.Lock()
+	defer t.Unlock()
+
+	for _, c := range t.connections {
+		if c == tc {
+			return
+		}
+	}
+	t.connections = append(t.connections, tc)
+}
+
+// dropConnections ...
+func (t *TCPTransport) dropConnections() {
+	for _, c := range t.connections {
+		c.Close()
+	}
+}
+
+// accept ...
+func (t *TCPTransport) accept() {
+	listener, err := net.Listen("tcp", t.address)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t.listener = listener
+
+	fmt.Println("Wait client connection ...")
+
+	for {
+		next, err := t.listener.Accept()
+		if err != nil {
+			break
+		}
+
+		t.next <- NewTCPTransportConnection(
+			next.RemoteAddr().String(),
+			next)
+	}
+
+	t.Stop()
+}
+
+// connect ...
+func (t *TCPTransport) connect() {
+	fmt.Println("Dial server ...")
+
+	for i := 0; i < t.maxRetryCount; i++ {
+		connection, err := net.DialTimeout("tcp", t.address, time.Second)
+
+		if connection != nil && err == nil {
+			t.next <- NewTCPTransportConnection(
+				connection.RemoteAddr().String(),
+				connection)
+			return
+		}
+
+		fmt.Println(err, "retry", i)
+
+		time.Sleep(time.Second * time.Duration(t.retryIntervalInSecond))
+	}
+
+	fmt.Println("Timeout to connect server")
+
+	t.Stop()
 }
 
 // ForServer ...
@@ -97,6 +199,20 @@ func (t *TCPTransport) ForServer(forServer bool) Transport {
 // GetName ...
 func (t *TCPTransport) GetName() string {
 	return t.name
+}
+
+// SetOption ...
+func (t *TCPTransport) SetOption(name string, value interface{}) Transport {
+	t.options[name] = value
+	return t
+}
+
+// GetOption ...
+func (t *TCPTransport) GetOption(name string) interface{} {
+	if value, ok := t.options[name]; ok {
+		return value
+	}
+	return nil
 }
 
 // SetAddress ...
@@ -112,11 +228,25 @@ func (t *TCPTransport) GetAddress() string {
 
 // NextConnection ...
 func (t *TCPTransport) NextConnection() TransportConnection {
-	return <-t.connection
+	next := <-t.next
+	t.saveConnection(next)
+	return next
 }
 
 // Run ...
 func (t *TCPTransport) Run() Transport {
+	t.Lock()
+	defer t.Unlock()
+
+	if t.isRunning {
+		return t
+	}
+
+	t.isRunning = true
+
+	t.parseOptions()
+	t.doInit()
+
 	if t.forServer {
 		go t.accept()
 	} else {
@@ -125,41 +255,25 @@ func (t *TCPTransport) Run() Transport {
 	return t
 }
 
-// accept ...
-func (t *TCPTransport) accept() {
-	listener, err := net.Listen("tcp", t.address)
-	if err != nil {
-		log.Fatal(err)
+// Stop ...
+func (t *TCPTransport) Stop() Transport {
+	t.Lock()
+	defer t.Unlock()
+
+	if !t.isRunning {
+		return t
 	}
-	defer listener.Close()
 
-	fmt.Println("Wait client connection ...")
-
-	for {
-		connection, err := listener.Accept()
-		if err == nil {
-			t.connection <- NewTCPTransportConnection(
-				connection.RemoteAddr().String(),
-				connection)
-		}
+	if t.listener != nil {
+		t.listener.Close()
+		t.listener = nil
 	}
-}
 
-// connect ...
-func (t *TCPTransport) connect() {
-	fmt.Println("Dial TCP Server ...")
+	close(t.next)
 
-	for {
-		connection, err := net.DialTimeout("tcp", t.address, time.Second*10)
-		if err == nil {
-			t.connection <- NewTCPTransportConnection(
-				connection.RemoteAddr().String(),
-				connection)
-			return
-		}
+	t.dropConnections()
 
-		fmt.Println(err, "retry ...")
+	t.isRunning = false
 
-		time.Sleep(time.Second)
-	}
+	return t
 }

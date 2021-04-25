@@ -34,6 +34,7 @@ import (
 
 // sharedMemoryChannel ...
 type sharedMemoryChannel struct {
+	refCount         int
 	serverTxClientRx chan *[]byte
 	serverRxClientTx chan *[]byte
 }
@@ -41,8 +42,17 @@ type sharedMemoryChannel struct {
 // newSharedMemoryChannel ...
 func newSharedMemoryChannel(size int) *sharedMemoryChannel {
 	return &sharedMemoryChannel{
+		refCount:         0,
 		serverTxClientRx: make(chan *[]byte, size),
 		serverRxClientTx: make(chan *[]byte, size),
+	}
+}
+
+// deleteSharedMemoryChannel ...
+func deleteSharedMemoryChannel(smc *sharedMemoryChannel) {
+	if smc != nil {
+		close(smc.serverTxClientRx)
+		close(smc.serverRxClientTx)
 	}
 }
 
@@ -126,18 +136,36 @@ func (c *SharedMemoryTransportConnection) Closed() bool {
 
 // SharedMemoryTransport ...
 type SharedMemoryTransport struct {
-	name       string
+	name    string
+	options map[string]interface{}
+	sync.Mutex
 	address    string
+	isRunning  bool
 	forServer  bool
-	connection chan TransportConnection
+	connection TransportConnection
+	next       chan TransportConnection
+	queueSize  int
 }
 
 // NewSharedMemoryTransport ...
 func NewSharedMemoryTransport(name string) Transport {
 	return &SharedMemoryTransport{
 		name:       name,
+		options:    make(map[string]interface{}),
+		isRunning:  false,
 		forServer:  true,
-		connection: make(chan TransportConnection, 1),
+		connection: nil,
+		next:       make(chan TransportConnection, 1),
+		queueSize:  512,
+	}
+}
+
+// parseOptions ...
+func (sm *SharedMemoryTransport) parseOptions() {
+	size, exists := OptionParseInt(sm.GetOption("MaxQueueSize"), 512)
+	sm.queueSize = size
+	if exists {
+		fmt.Println("SharedMemoryTransport: option MaxQueueSize:", sm.queueSize)
 	}
 }
 
@@ -150,6 +178,20 @@ func (sm *SharedMemoryTransport) ForServer(forServer bool) Transport {
 // GetName ...
 func (sm *SharedMemoryTransport) GetName() string {
 	return sm.name
+}
+
+// SetOption ...
+func (sm *SharedMemoryTransport) SetOption(name string, value interface{}) Transport {
+	sm.options[name] = value
+	return sm
+}
+
+// GetOption ...
+func (sm *SharedMemoryTransport) GetOption(name string) interface{} {
+	if value, ok := sm.options[name]; ok {
+		return value
+	}
+	return nil
 }
 
 // SetAddress ...
@@ -165,7 +207,9 @@ func (sm *SharedMemoryTransport) GetAddress() string {
 
 // NextConnection ...
 func (sm *SharedMemoryTransport) NextConnection() TransportConnection {
-	return <-sm.connection
+	next := <-sm.next
+	sm.connection = next
+	return sm.connection
 }
 
 // Two Transports(Client side and Server side) should use the same
@@ -176,17 +220,58 @@ var chans map[string]*sharedMemoryChannel = make(map[string]*sharedMemoryChannel
 
 // Run ...
 func (sm *SharedMemoryTransport) Run() Transport {
+	sm.Lock()
+	defer sm.Unlock()
+
+	if sm.isRunning {
+		return sm
+	}
+
+	sm.parseOptions()
+
 	mutex.Lock()
-	defer mutex.Unlock()
 
 	// check if some Transport have created
 	ch, ok := chans[sm.address]
 	if !ok {
 		// not found, create new one
-		ch = newSharedMemoryChannel(512)
+		ch = newSharedMemoryChannel(sm.queueSize)
 		chans[sm.address] = ch
 	}
-	sm.connection <- NewSharedMemoryTransportConnection(sm.name, sm.forServer, ch)
+
+	ch.refCount++
+
+	sm.next <- NewSharedMemoryTransportConnection(sm.name, sm.forServer, ch)
+
+	mutex.Unlock()
+
+	return sm
+}
+
+// Stop ...
+func (sm *SharedMemoryTransport) Stop() Transport {
+	sm.Lock()
+	defer sm.Unlock()
+
+	if !sm.isRunning {
+		return sm
+	}
+
+	sm.connection.Close()
+
+	mutex.Lock()
+
+	ch, ok := chans[sm.address]
+	if ok {
+		ch.refCount--
+
+		if ch.refCount == 0 {
+			delete(chans, sm.address)
+			deleteSharedMemoryChannel(ch)
+		}
+	}
+
+	mutex.Unlock()
 
 	return sm
 }

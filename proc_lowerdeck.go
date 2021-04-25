@@ -31,6 +31,57 @@ func (ld *LowerDeck) closeConnection(c TransportConnection) {
 	})
 }
 
+// acceptTransport ...
+func (ld *LowerDeck) acceptTransport(tp Transport) {
+
+	tp.Run()
+
+	// New routinue to wait connections
+	go func() {
+		for {
+			// this call will be blocked until new connection coming
+			connection := tp.NextConnection()
+
+			if connection == nil {
+				return
+			}
+
+			fmt.Println("New connection:", connection.GetName(), "on transport:", tp.GetName())
+
+			// publish event
+			ld.ustack.PublishEvent(Event{
+				Type:   UStackEventNewConnection,
+				Source: ld,
+				Data:   connection,
+			})
+
+			// New routine to continue receive data from connection
+			go func() {
+				for {
+					ub := UBufAlloc(ld.ustack.GetMTU())
+
+					n, err := ub.ReadFrom(connection)
+					if n == 0 || err != nil {
+						ld.closeConnection(connection)
+						return
+					}
+
+					// invoke the uplayer
+					ld.upper.OnLowerData(
+						NewUStackContext().
+							SetConnection(connection).
+							SetBuffer(ub))
+				}
+			}()
+		}
+	}()
+}
+
+// deleteTransport ...
+func (ld *LowerDeck) deleteTransport(tp Transport) {
+	tp.Stop()
+}
+
 // OnUpperData sends ulayer data with connection
 func (ld *LowerDeck) OnUpperData(context Context) {
 	ub := context.GetBuffer()
@@ -50,46 +101,25 @@ func (ld *LowerDeck) OnUpperData(context Context) {
 	}
 }
 
+// OnEvent is called when any event hanppen
+func (ld *LowerDeck) OnEvent(event Event) {
+	tp, ok := event.Data.(Transport)
+	if !ok {
+		return
+	}
+
+	if event.Type == UStackEventTransportAdded {
+		ld.acceptTransport(tp)
+	} else if event.Type == UStackEventTransportDeleted {
+		ld.deleteTransport(tp)
+	}
+}
+
 // Run monitor new coming connection with routine
 // and receive data from any new connection with routine
 func (ld *LowerDeck) Run() DataProcessor {
-	for _, transport := range ld.ustack.GetTransport() {
-		tp := transport
-		// New routinue to wait connections
-		go func() {
-			for {
-				// this call will be blocked until new connection coming
-				connection := tp.NextConnection()
-
-				fmt.Println("New connection:", connection.GetName(), "on transport:", tp.GetName())
-
-				// publish event
-				ld.ustack.PublishEvent(Event{
-					Type:   UStackEventNewConnection,
-					Source: ld,
-					Data:   connection,
-				})
-
-				// New routine to continue receive data from connection
-				go func() {
-					for {
-						ub := UBufAlloc(ld.ustack.GetMTU())
-
-						n, err := ub.ReadFrom(connection)
-						if n == 0 || err != nil {
-							ld.closeConnection(connection)
-							return
-						}
-
-						// invoke the uplayer
-						ld.upper.OnLowerData(
-							NewUStackContext().
-								SetConnection(connection).
-								SetBuffer(ub))
-					}
-				}()
-			}
-		}()
+	for _, tp := range ld.ustack.GetTransport() {
+		ld.acceptTransport(tp)
 	}
 
 	return ld

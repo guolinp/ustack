@@ -27,6 +27,7 @@ type UStack interface {
 	GetFeatures() []Feature
 
 	AddEndPoint(ep EndPoint) UStack
+	DeleteEndPoint(ep EndPoint) UStack
 	GetEndPoint() []EndPoint
 
 	AppendDataProcessor(dp DataProcessor) UStack
@@ -34,6 +35,7 @@ type UStack interface {
 	GetMTU() int
 
 	AddTransport(tp Transport) UStack
+	DeleteTransport(tp Transport) UStack
 	GetTransport() []Transport
 
 	SetEventListener(listener func(Event)) UStack

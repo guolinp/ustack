@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -37,14 +38,14 @@ func (c *UDSTransportConnection) GetName() string {
 // Read ...
 func (c *UDSTransportConnection) Read(p []byte) (n int, err error) {
 	if c.closed {
-		fmt.Println("connection is closed")
+		fmt.Println("read failed as connection", c.name, " is closed")
 		return 0, nil
 	}
 
 	n, err = c.conn.Read(p)
 	if err != nil {
 		if err != io.EOF {
-			fmt.Println("read error:", err)
+			fmt.Println("connection", c.name, "read failed:", err)
 		}
 	}
 
@@ -54,7 +55,7 @@ func (c *UDSTransportConnection) Read(p []byte) (n int, err error) {
 // Write ...
 func (c *UDSTransportConnection) Write(p []byte) (n int, err error) {
 	if c.closed {
-		fmt.Println("connection is closed")
+		fmt.Println("write failed as connection", c.name, " is closed")
 		return 0, nil
 	}
 
@@ -74,19 +75,127 @@ func (c *UDSTransportConnection) Closed() bool {
 
 // UDSTransport ...
 type UDSTransport struct {
-	name       string
-	filename   string
-	forServer  bool
-	connection chan TransportConnection
+	name    string
+	options map[string]interface{}
+	sync.Mutex
+	filename    string
+	isRunning   bool
+	forServer   bool
+	connections []TransportConnection
+	next        chan TransportConnection
+	// for server
+	listener net.Listener
+	// for client
+	maxRetryCount         int
+	retryIntervalInSecond int
 }
 
 // NewUDSTransport ...
 func NewUDSTransport(name string) Transport {
 	return &UDSTransport{
-		name:       name,
-		forServer:  true,
-		connection: make(chan TransportConnection, 16),
+		name:      name,
+		options:   make(map[string]interface{}),
+		isRunning: false,
+		forServer: true,
+		listener:  nil,
 	}
+}
+
+// parseOptions ...
+func (uds *UDSTransport) parseOptions() {
+	retry, exists := OptionParseInt(uds.GetOption("MaxRetryCount"), 180)
+	uds.maxRetryCount = retry
+	if exists {
+		fmt.Println("UDSTransport: option MaxRetryCount:", uds.maxRetryCount)
+	}
+
+	interval, exists := OptionParseInt(uds.GetOption("RetryIntervalInSecond"), 1)
+	uds.retryIntervalInSecond = interval
+	if exists {
+		fmt.Println("UDSTransport: option RetryIntervalInSecond:", uds.retryIntervalInSecond)
+	}
+}
+
+// doInit ...
+func (uds *UDSTransport) doInit() {
+	uds.connections = make([]TransportConnection, 0)
+	uds.next = make(chan TransportConnection, 16)
+}
+
+// saveConnections ...
+func (uds *UDSTransport) saveConnection(tc TransportConnection) {
+	if tc == nil {
+		return
+	}
+
+	uds.Lock()
+	defer uds.Unlock()
+
+	for _, c := range uds.connections {
+		if c == tc {
+			return
+		}
+	}
+	uds.connections = append(uds.connections, tc)
+}
+
+// dropConnections ...
+func (uds *UDSTransport) dropConnections() {
+	for _, c := range uds.connections {
+		c.Close()
+	}
+}
+
+// accept ...
+func (uds *UDSTransport) accept() {
+	os.Remove(uds.filename)
+
+	listener, err := net.Listen("unix", uds.filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer os.Remove(uds.filename)
+
+	uds.listener = listener
+
+	fmt.Println("Wait client connection ...")
+
+	for {
+		next, err := uds.listener.Accept()
+		if err != nil {
+			break
+		}
+
+		uds.next <- NewUDSTransportConnection(
+			next.RemoteAddr().String(),
+			next)
+	}
+
+	uds.Stop()
+}
+
+// connect ...
+func (uds *UDSTransport) connect() {
+	fmt.Println("Dial server ...")
+
+	for i := 0; i < uds.maxRetryCount; i++ {
+		connection, err := net.DialTimeout("unix", uds.filename, time.Second)
+
+		if connection != nil && err == nil {
+			uds.next <- NewUDSTransportConnection(
+				connection.RemoteAddr().String(),
+				connection)
+			return
+		}
+
+		fmt.Println(err, "retry", i+1)
+
+		time.Sleep(time.Second * time.Duration(uds.retryIntervalInSecond))
+	}
+
+	fmt.Println("Timeout to connect server")
+	uds.Stop()
 }
 
 // ForServer ...
@@ -98,6 +207,20 @@ func (uds *UDSTransport) ForServer(forServer bool) Transport {
 // GetName ...
 func (uds *UDSTransport) GetName() string {
 	return uds.name
+}
+
+// SetOption ...
+func (uds *UDSTransport) SetOption(name string, value interface{}) Transport {
+	uds.options[name] = value
+	return uds
+}
+
+// GetOption ...
+func (uds *UDSTransport) GetOption(name string) interface{} {
+	if value, ok := uds.options[name]; ok {
+		return value
+	}
+	return nil
 }
 
 // SetAddress ...
@@ -113,11 +236,25 @@ func (uds *UDSTransport) GetAddress() string {
 
 // NextConnection ...
 func (uds *UDSTransport) NextConnection() TransportConnection {
-	return <-uds.connection
+	next := <-uds.next
+	uds.saveConnection(next)
+	return next
 }
 
 // Run ...
 func (uds *UDSTransport) Run() Transport {
+	uds.Lock()
+	defer uds.Unlock()
+
+	if uds.isRunning {
+		return uds
+	}
+
+	uds.isRunning = true
+
+	uds.parseOptions()
+	uds.doInit()
+
 	if uds.forServer {
 		go uds.accept()
 	} else {
@@ -126,45 +263,25 @@ func (uds *UDSTransport) Run() Transport {
 	return uds
 }
 
-// accept ...
-func (uds *UDSTransport) accept() {
-	os.Remove(uds.filename)
+// Stop ...
+func (uds *UDSTransport) Stop() Transport {
+	uds.Lock()
+	defer uds.Unlock()
 
-	listener, err := net.Listen("unix", uds.filename)
-	if err != nil {
-		log.Fatal(err)
+	if !uds.isRunning {
+		return uds
 	}
 
-	defer os.Remove(uds.filename)
-	defer listener.Close()
-
-	fmt.Println("Wait client connection ...")
-
-	for {
-		connection, err := listener.Accept()
-		if err == nil {
-			uds.connection <- NewUDSTransportConnection(
-				connection.RemoteAddr().String(),
-				connection)
-		}
+	if uds.listener != nil {
+		uds.listener.Close()
+		uds.listener = nil
 	}
-}
 
-// connect ...
-func (uds *UDSTransport) connect() {
-	fmt.Println("Dial UDS Server ...")
+	close(uds.next)
 
-	for {
-		connection, err := net.DialTimeout("unix", uds.filename, time.Second*10)
-		if err == nil {
-			uds.connection <- NewUDSTransportConnection(
-				connection.RemoteAddr().String(),
-				connection)
-			return
-		}
+	uds.dropConnections()
 
-		fmt.Println(err, ",retry ...")
+	uds.isRunning = false
 
-		time.Sleep(time.Second)
-	}
+	return uds
 }

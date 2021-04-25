@@ -4,6 +4,12 @@
 
 package ustack
 
+import "fmt"
+
+const (
+	defaultMTU int = 2048
+)
+
 // DefaultUStackContext ...
 type DefaultUStackContext struct {
 	connection TransportConnection
@@ -59,6 +65,7 @@ func (c *DefaultUStackContext) GetBuffer() *UBuf {
 // DefaultUStack ...
 type DefaultUStack struct {
 	name       string
+	mtu        int
 	options    map[string]interface{}
 	features   []Feature
 	endpoints  []EndPoint
@@ -74,6 +81,7 @@ type DefaultUStack struct {
 func NewUStack() UStack {
 	return &DefaultUStack{
 		name:       "UStack",
+		mtu:        defaultMTU,
 		options:    make(map[string]interface{}),
 		features:   nil,
 		endpoints:  nil,
@@ -86,8 +94,19 @@ func NewUStack() UStack {
 	}
 }
 
+// parseOptions ...
+func (u *DefaultUStack) parseOptions() {
+	mtu, exists := OptionParseInt(u.GetOption("MTU"), defaultMTU)
+	u.mtu = mtu
+	if exists {
+		fmt.Println("UStack: option MTU:", u.mtu)
+	}
+}
+
 // build ...
 func (u *DefaultUStack) build() {
+	u.parseOptions()
+
 	u.upperDeck = NewUpperDeck().SetUStack(u)
 	u.lowerDeck = NewLowerDeck().SetUStack(u)
 
@@ -161,7 +180,42 @@ func (u *DefaultUStack) GetFeatures() []Feature {
 
 // AddEndPoint ...
 func (u *DefaultUStack) AddEndPoint(ep EndPoint) UStack {
+	for _, endpoint := range u.endpoints {
+		if endpoint == ep {
+			// was added
+			return u
+		}
+	}
+
+	u.PublishEvent(Event{
+		Type:   UStackEventEndpointAdded,
+		Source: u,
+		Data:   ep,
+	})
+
 	u.endpoints = append(u.endpoints, ep)
+	return u
+}
+
+// DeleteEndPoint ...
+func (u *DefaultUStack) DeleteEndPoint(ep EndPoint) UStack {
+	for i, endpoint := range u.endpoints {
+		if endpoint != ep {
+			continue
+		}
+
+		u.PublishEvent(Event{
+			Type:   UStackEventEndpointDeleted,
+			Source: u,
+			Data:   ep,
+		})
+
+		// delete
+		u.endpoints = append(u.endpoints[:i], u.endpoints[i+1:]...)
+
+		break
+	}
+
 	return u
 }
 
@@ -183,13 +237,47 @@ func (u *DefaultUStack) GetOverhead() int {
 
 // GetMTU returns maximum transmission unit size
 func (u *DefaultUStack) GetMTU() int {
-	// will get from options or Transport
-	return 2048
+	return u.mtu
 }
 
 // AddTransport ...
 func (u *DefaultUStack) AddTransport(tp Transport) UStack {
+	for _, transport := range u.transports {
+		if transport == tp {
+			// was added
+			return u
+		}
+	}
+
+	u.PublishEvent(Event{
+		Type:   UStackEventTransportAdded,
+		Source: u,
+		Data:   tp,
+	})
+
 	u.transports = append(u.transports, tp)
+	return u
+}
+
+// DeleteTransport ...
+func (u *DefaultUStack) DeleteTransport(tp Transport) UStack {
+	for i, transport := range u.transports {
+		if transport != tp {
+			continue
+		}
+
+		// delete
+		u.transports = append(u.transports[:i], u.transports[i+1:]...)
+
+		u.PublishEvent(Event{
+			Type:   UStackEventTransportDeleted,
+			Source: u,
+			Data:   tp,
+		})
+
+		break
+	}
+
 	return u
 }
 
@@ -212,11 +300,15 @@ func (u *DefaultUStack) PublishEvent(event Event) UStack {
 	for _, endpoint := range u.endpoints {
 		endpoint.OnEvent(event)
 	}
-	u.upperDeck.OnEvent(event)
+	if u.upperDeck != nil {
+		u.upperDeck.OnEvent(event)
+	}
 	for _, processor := range u.processors {
 		processor.OnEvent(event)
 	}
-	u.lowerDeck.OnEvent(event)
+	if u.lowerDeck != nil {
+		u.lowerDeck.OnEvent(event)
+	}
 	return u
 }
 
@@ -235,10 +327,6 @@ func (u *DefaultUStack) Run() UStack {
 	}
 
 	u.lowerDeck.Run()
-
-	for _, tp := range u.transports {
-		tp.Run()
-	}
 
 	return u
 }

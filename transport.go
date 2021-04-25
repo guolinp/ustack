@@ -16,9 +16,12 @@ type TransportConnection interface {
 // Transport ...
 type Transport interface {
 	GetName() string
+	SetOption(name string, value interface{}) Transport
+	GetOption(name string) interface{}
 	ForServer(bool) Transport
 	SetAddress(address string) Transport
 	GetAddress() string
 	NextConnection() TransportConnection
 	Run() Transport
+	Stop() Transport
 }

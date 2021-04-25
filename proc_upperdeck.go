@@ -4,18 +4,82 @@
 
 package ustack
 
+import (
+	"sync"
+)
+
 // UpperDeck manages endpoints
 type UpperDeck struct {
 	ProcBase
-	endpoints []EndPoint
+	sync.Mutex
+	endpoints map[EndPoint]chan bool
 }
 
-func (ud *UpperDeck) build() {
-	ud.endpoints = ud.ustack.GetEndPoint()
+func (ud *UpperDeck) existsEndpoint(ep EndPoint) bool {
+	ud.Lock()
+	defer ud.Unlock()
+
+	for endpoint := range ud.endpoints {
+		if endpoint == ep || endpoint.GetSession() == ep.GetSession() {
+			return true
+		}
+	}
+	return false
+}
+
+// accpetEndpoint ...
+func (ud *UpperDeck) acceptEndpoint(ep EndPoint) {
+	if ud.existsEndpoint(ep) {
+		return
+	}
+
+	ud.Lock()
+	defer ud.Unlock()
+
+	ud.endpoints[ep] = make(chan bool, 1)
+
+	session := ep.GetSession()
+	txchan := ep.GetTxChannel()
+	lower := ud.lower
+
+	// create routinue for each endpoint
+	// read data from endpoint and pass it to lower
+	go func() {
+		for {
+			select {
+			case stop := <-ud.endpoints[ep]:
+				if stop {
+					return
+				}
+			case epd := <-txchan:
+				lower.OnUpperData(
+					NewUStackContext().
+						SetConnection(epd.GetConnection()).
+						SetOption("session", session).
+						SetOption("message", epd.GetData()))
+			}
+		}
+	}()
+}
+
+// deleteTransport ...
+func (ud *UpperDeck) deleteEndpoint(ep EndPoint) {
+	ud.Lock()
+	defer ud.Unlock()
+
+	ch, ok := ud.endpoints[ep]
+	if ok {
+		ch <- true
+		close(ch)
+		delete(ud.endpoints, ep)
+	}
 }
 
 func (ud *UpperDeck) findEndPoint(session int) EndPoint {
-	for _, ep := range ud.endpoints {
+	ud.Lock()
+	defer ud.Unlock()
+
+	for ep := range ud.endpoints {
 		if ep.GetSession() == session {
 			return ep
 		}
@@ -27,7 +91,7 @@ func (ud *UpperDeck) findEndPoint(session int) EndPoint {
 func NewUpperDeck() DataProcessor {
 	ud := &UpperDeck{
 		ProcBase:  NewProcBaseInstance("UpperDeck"),
-		endpoints: nil,
+		endpoints: make(map[EndPoint]chan bool, 1),
 	}
 	return ud.ProcBase.SetWhere(ud)
 }
@@ -39,6 +103,7 @@ func (ud *UpperDeck) OnLowerData(context Context) {
 		return
 	}
 
+	// the default is 0 if seesion is not enabled
 	session, _ := OptionParseInt(context.GetOption("session"), 0)
 
 	ep := ud.findEndPoint(session)
@@ -47,27 +112,24 @@ func (ud *UpperDeck) OnLowerData(context Context) {
 	}
 }
 
+// OnEvent is called when any event hanppen
+func (ud *UpperDeck) OnEvent(event Event) {
+	ep, ok := event.Data.(EndPoint)
+	if !ok {
+		return
+	}
+
+	if event.Type == UStackEventEndpointAdded {
+		ud.acceptEndpoint(ep)
+	} else if event.Type == UStackEventEndpointDeleted {
+		ud.deleteEndpoint(ep)
+	}
+}
+
 // Run ...
 func (ud *UpperDeck) Run() DataProcessor {
-	// do build
-	ud.build()
-
-	lower := ud.lower
-	for _, ep := range ud.endpoints {
-		session := ep.GetSession()
-		txchan := ep.GetTxChannel()
-
-		// create routinue for each endpoint
-		// read data from endpoint and pass it to lowlayer
-		go func() {
-			for epd := range txchan {
-				lower.OnUpperData(
-					NewUStackContext().
-						SetConnection(epd.GetConnection()).
-						SetOption("session", session).
-						SetOption("message", epd.GetData()))
-			}
-		}()
+	for _, ep := range ud.ustack.GetEndPoint() {
+		ud.acceptEndpoint(ep)
 	}
 
 	return ud
