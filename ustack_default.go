@@ -14,6 +14,7 @@ const (
 type DefaultUStackContext struct {
 	connection TransportConnection
 	ubuf       *UBuf
+	message    interface{}
 	options    map[string]interface{}
 }
 
@@ -22,6 +23,7 @@ func NewUStackContext() Context {
 	return &DefaultUStackContext{
 		connection: nil,
 		ubuf:       nil,
+		message:    nil,
 		options:    make(map[string]interface{}),
 	}
 }
@@ -35,14 +37,6 @@ func (c *DefaultUStackContext) SetConnection(connection TransportConnection) Con
 // GetConnection ...
 func (c *DefaultUStackContext) GetConnection() TransportConnection {
 	return c.connection
-}
-
-// IsSameProcess ...
-func (c *DefaultUStackContext) UseReference() bool {
-	if c.connection != nil {
-		return c.connection.UseReference()
-	}
-	return false
 }
 
 // SetOption ...
@@ -68,6 +62,17 @@ func (c *DefaultUStackContext) SetBuffer(ubuf *UBuf) Context {
 // GetCacheData ...
 func (c *DefaultUStackContext) GetBuffer() *UBuf {
 	return c.ubuf
+}
+
+// SetMessage ...
+func (c *DefaultUStackContext) SetMessage(message interface{}) Context {
+	c.message = message
+	return c
+}
+
+// GetMessage ...
+func (c *DefaultUStackContext) GetMessage() interface{} {
+	return c.message
 }
 
 // DefaultUStack ...

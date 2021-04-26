@@ -41,7 +41,9 @@ func client() {
 							go func() {
 								for {
 									//time.Sleep(time.Millisecond * 1)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, packageData)
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData(packageData)
 									TxCount++
 								}
 							}()
@@ -79,7 +81,9 @@ func server() {
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
 						//fmt.Println("ACK:", epd.GetConnection().GetName(), string(epd.GetData().([]byte)))
 						RxCount++
-						endpoint.GetTxChannel() <- ustack.NewEndPointData(epd.GetConnection(), packageData)
+						endpoint.GetTxChannel() <- ustack.NewEndPointData().
+							SetConnection(epd.GetConnection()).
+							SetData(packageData)
 						TxCount++
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).

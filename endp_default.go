@@ -6,16 +6,26 @@ package ustack
 
 // DefaultEndPointData ...
 type DefaultEndPointData struct {
-	connection TransportConnection
-	data       interface{}
+	connection            TransportConnection
+	data                  interface{}
+	hasDestinationSession bool
+	destinationSession    int
 }
 
 // NewEndPointData ...
-func NewEndPointData(connection TransportConnection, data interface{}) *DefaultEndPointData {
+func NewEndPointData() EndPointData {
 	return &DefaultEndPointData{
-		connection: connection,
-		data:       data,
+		connection:            nil,
+		data:                  nil,
+		hasDestinationSession: false,
+		destinationSession:    0,
 	}
+}
+
+// GetConnection ...
+func (epd *DefaultEndPointData) SetConnection(c TransportConnection) EndPointData {
+	epd.connection = c
+	return epd
 }
 
 // GetConnection ...
@@ -23,9 +33,38 @@ func (epd *DefaultEndPointData) GetConnection() TransportConnection {
 	return epd.connection
 }
 
+// SetData ...
+func (epd *DefaultEndPointData) SetData(data interface{}) EndPointData {
+	epd.data = data
+	return epd
+}
+
 // GetData ...
 func (epd *DefaultEndPointData) GetData() interface{} {
 	return epd.data
+}
+
+// HasDestinationSession ...
+func (epd *DefaultEndPointData) HasDestinationSession() bool {
+	return epd.hasDestinationSession
+}
+
+// HasDestinationSession ...
+func (epd *DefaultEndPointData) SetDestinationSession(session int) EndPointData {
+	epd.destinationSession = session
+	epd.hasDestinationSession = true
+	return epd
+}
+
+// GetDestinationSession ...
+func (epd *DefaultEndPointData) GetDestinationSession() int {
+	return epd.destinationSession
+}
+
+// HasDestinationSession ...
+func (epd *DefaultEndPointData) ClearDestinationSession() EndPointData {
+	epd.hasDestinationSession = false
+	return epd
 }
 
 // DefaultEndPoint ...
@@ -81,9 +120,21 @@ func (ep *DefaultEndPoint) SetDataListener(listener func(EndPoint, EndPointData)
 	return ep
 }
 
+// SetName ...
+func (ep *DefaultEndPoint) SetName(name string) EndPoint {
+	ep.name = name
+	return ep
+}
+
 // GetName ...
 func (ep *DefaultEndPoint) GetName() string {
 	return ep.name
+}
+
+// SetName ...
+func (ep *DefaultEndPoint) SetSession(session int) EndPoint {
+	ep.session = session
+	return ep
 }
 
 // GetPort ...

@@ -20,7 +20,9 @@ func client() {
 							go func() {
 								for {
 									time.Sleep(time.Millisecond * 1000)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData([]byte("1234"))
 								}
 							}()
 						} else if event.Type == ustack.UStackEventConnectionClosed {
@@ -37,24 +39,17 @@ func client() {
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).
 				SetAddress("127.0.0.1:1234")).
-		Run()
-
-}
-
-func server() {
-	ustack.NewUStack().
-		SetName("Server").
 		AddTransport(
 			ustack.NewTCPTransport("tcpServer").
 				ForServer(true).
 				SetAddress("127.0.0.1:1234")).
 		Run()
+
 }
 
 func main() {
 	if len(os.Args) > 1 {
 		if fn, ok := map[string]func(){
-			"-s": server,
 			"-c": client,
 		}[os.Args[1]]; ok {
 			fn()
@@ -63,5 +58,5 @@ func main() {
 		}
 	}
 
-	fmt.Println(os.Args[0], "<-s|-c|-h>")
+	fmt.Println(os.Args[0], "<-c|-h>")
 }

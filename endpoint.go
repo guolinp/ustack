@@ -6,17 +6,25 @@ package ustack
 
 // EndPointData ...
 type EndPointData interface {
+	SetConnection(c TransportConnection) EndPointData
 	GetConnection() TransportConnection
+	SetData(data interface{}) EndPointData
 	GetData() interface{}
+	HasDestinationSession() bool
+	SetDestinationSession(session int) EndPointData
+	GetDestinationSession() int
+	ClearDestinationSession() EndPointData
 }
 
 // EndPoint ...
 type EndPoint interface {
+	SetName(name string) EndPoint
 	GetName() string
+	SetSession(session int) EndPoint
 	GetSession() int
-	SetDataListener(listener func(EndPoint, EndPointData)) EndPoint
 	GetTxChannel() chan EndPointData
 	GetRxChannel() chan EndPointData
+	SetDataListener(listener func(EndPoint, EndPointData)) EndPoint
 	SetEventListener(listener func(EndPoint, Event)) EndPoint
 	OnEvent(event Event)
 }

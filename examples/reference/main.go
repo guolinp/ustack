@@ -22,7 +22,9 @@ func client() {
 									time.Sleep(time.Millisecond * 100)
 									data := "1234567890"
 									fmt.Println("Send:", data)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte(data))
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData([]byte(data))
 								}
 							}()
 						} else if event.Type == ustack.UStackEventConnectionClosed {

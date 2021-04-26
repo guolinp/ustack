@@ -93,7 +93,7 @@ func (hb *Heartbeat) GetOverhead() int {
 
 // OnUpperData ...
 func (hb *Heartbeat) OnUpperData(context Context) {
-	if context.UseReference() {
+	if context.GetConnection().UseReference() {
 		hb.lower.OnUpperData(context)
 		return
 	}
@@ -110,7 +110,7 @@ func (hb *Heartbeat) OnUpperData(context Context) {
 
 // OnLowerData ...
 func (hb *Heartbeat) OnLowerData(context Context) {
-	if context.UseReference() {
+	if context.GetConnection().UseReference() {
 		hb.upper.OnLowerData(context)
 		return
 	}

@@ -68,7 +68,7 @@ func (ld *LowerDeck) acceptTransport(tp Transport) {
 						ld.upper.OnLowerData(
 							NewUStackContext().
 								SetConnection(connection).
-								SetOption("message", message))
+								SetMessage(message))
 					} else {
 						ub := UBufAlloc(ld.ustack.GetMTU())
 
@@ -103,8 +103,8 @@ func (ld *LowerDeck) OnUpperData(context Context) {
 		return
 	}
 
-	if context.UseReference() {
-		err = connection.SetReference(context.GetOption("message"))
+	if connection.UseReference() {
+		err = connection.SetReference(context.GetMessage())
 	} else {
 		ub := context.GetBuffer()
 		if ub == nil {

@@ -64,11 +64,15 @@ func client() {
 
 							var p Shower = &Person{Name: "LiSi", Age: 10}
 							fmt.Println("Send:", p.Show())
-							endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, &p)
+							endpoint.GetTxChannel() <- ustack.NewEndPointData().
+								SetConnection(connection).
+								SetData(&p)
 
 							var d Shower = &Dog{Name: "Tom"}
 							fmt.Println("Send:", d.Show())
-							endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, &d)
+							endpoint.GetTxChannel() <- ustack.NewEndPointData().
+								SetConnection(connection).
+								SetData(&d)
 						} else if event.Type == ustack.UStackEventConnectionClosed {
 							os.Exit(1)
 						}

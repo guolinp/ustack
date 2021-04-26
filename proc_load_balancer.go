@@ -37,7 +37,7 @@ func (lb *LoadBalancer) GetOverhead() int {
 
 // OnUpperData ...
 func (lb *LoadBalancer) OnUpperData(context Context) {
-	if context.UseReference() {
+	if context.GetConnection().UseReference() {
 		lb.lower.OnUpperData(context)
 		return
 	}
@@ -59,7 +59,7 @@ func (lb *LoadBalancer) OnUpperData(context Context) {
 
 // OnLowerData ...
 func (lb *LoadBalancer) OnLowerData(context Context) {
-	if context.UseReference() {
+	if context.GetConnection().UseReference() {
 		lb.upper.OnLowerData(context)
 		return
 	}

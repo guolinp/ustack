@@ -28,7 +28,7 @@ func NewJSONCodec(t reflect.Type) DataProcessor {
 // OnUpperData ...
 func (jc *JSONCodec) OnUpperData(context Context) {
 	if jc.enable {
-		message := context.GetOption("message")
+		message := context.GetMessage()
 		if message == nil {
 			return
 		}
@@ -76,7 +76,7 @@ func (jc *JSONCodec) OnLowerData(context Context) {
 			return
 		}
 
-		context.SetOption("message", objectItf)
+		context.SetMessage(objectItf)
 	}
 
 	jc.upper.OnLowerData(context)

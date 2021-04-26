@@ -85,12 +85,12 @@ func (c *ReferenceTransportConnection) GetName() string {
 
 // Read ...
 func (c *ReferenceTransportConnection) Read(p []byte) (n int, err error) {
-	return 0, errors.New("Read: Does not support this call")
+	return 0, errors.New("ReferenceTransportConnection:Read: does not support this call")
 }
 
 // Write ...
 func (c *ReferenceTransportConnection) Write(p []byte) (n int, err error) {
-	return 0, errors.New("Write: Does not support this call")
+	return 0, errors.New("ReferenceTransportConnection:Write: does not support this call")
 }
 
 // UseReference ...

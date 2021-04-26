@@ -20,7 +20,12 @@ func NewBytesCodec() DataProcessor {
 // OnUpperData ...
 func (bc *BytesCodec) OnUpperData(context Context) {
 	if bc.enable {
-		bytes, ok := OptionParseByteSlice(context.GetOption("message"))
+		message := context.GetMessage()
+		if message == nil {
+			return
+		}
+
+		bytes, ok := message.([]byte)
 		if !ok {
 			return
 		}
@@ -55,7 +60,7 @@ func (bc *BytesCodec) OnLowerData(context Context) {
 			return
 		}
 
-		context.SetOption("message", bytes)
+		context.SetMessage(bytes)
 	}
 
 	bc.upper.OnLowerData(context)

@@ -28,9 +28,9 @@ type GenericCodec struct {
 // NewGenericCodec ...
 func NewGenericCodec(init InitFn, encoder EncoderFn, decoder DecoderFn) DataProcessor {
 	gc := &GenericCodec{
-		ProcBase:    NewProcBaseInstance("GenericCodec"),
-		encoder: encoder,
-		decoder: decoder,
+		ProcBase: NewProcBaseInstance("GenericCodec"),
+		encoder:  encoder,
+		decoder:  decoder,
 	}
 
 	if init != nil {
@@ -48,7 +48,7 @@ func (gc *GenericCodec) OnUpperData(context Context) {
 			return
 		}
 
-		message := context.GetOption("message")
+		message := context.GetMessage()
 		if message == nil {
 			fmt.Println("GenericCodec: invalid message data")
 			return
@@ -89,7 +89,7 @@ func (gc *GenericCodec) OnLowerData(context Context) {
 			return
 		}
 
-		context.SetOption("message", message)
+		context.SetMessage(message)
 	}
 
 	gc.upper.OnLowerData(context)

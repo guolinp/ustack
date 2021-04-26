@@ -28,7 +28,7 @@ func NewGOBCodec(t reflect.Type) DataProcessor {
 // OnUpperData ...
 func (g *GOBCodec) OnUpperData(context Context) {
 	if g.enable {
-		message := context.GetOption("message")
+		message := context.GetMessage()
 		if message == nil {
 			return
 		}
@@ -64,7 +64,7 @@ func (g *GOBCodec) OnLowerData(context Context) {
 			return
 		}
 
-		context.SetOption("message", objectItf)
+		context.SetMessage(objectItf)
 	}
 
 	g.upper.OnLowerData(context)

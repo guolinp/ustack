@@ -41,7 +41,9 @@ var epForClient ustack.EndPoint = ustack.NewEndPoint("NewEP-Client", 10).
 						time.Sleep(time.Millisecond * 1000)
 						data := []byte("abcd")
 						fmt.Println("EP10-Send:", string(data))
-						endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, data)
+						endpoint.GetTxChannel() <- ustack.NewEndPointData().
+							SetConnection(connection).
+							SetData(data)
 					}
 				}()
 			}
@@ -88,7 +90,9 @@ func client() {
 									}
 									time.Sleep(time.Millisecond * 1000)
 									fmt.Println("EP0-Send:", string(data))
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, data)
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData(data)
 								}
 							}(conn)
 

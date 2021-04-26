@@ -52,11 +52,16 @@ func (ud *UpperDeck) acceptEndpoint(ep EndPoint) {
 					return
 				}
 			case epd := <-txchan:
+				destinationSession := session
+				if epd.HasDestinationSession() {
+					destinationSession = epd.GetDestinationSession()
+				}
+
 				lower.OnUpperData(
 					NewUStackContext().
 						SetConnection(epd.GetConnection()).
-						SetOption("session", session).
-						SetOption("message", epd.GetData()))
+						SetMessage(epd.GetData()).
+						SetOption("session", destinationSession))
 			}
 		}
 	}()
@@ -98,7 +103,7 @@ func NewUpperDeck() DataProcessor {
 
 // OnLowerData finds the endpoint with session and pass data
 func (ud *UpperDeck) OnLowerData(context Context) {
-	message := context.GetOption("message")
+	message := context.GetMessage()
 	if message == nil {
 		return
 	}
@@ -108,7 +113,9 @@ func (ud *UpperDeck) OnLowerData(context Context) {
 
 	ep := ud.findEndPoint(session)
 	if ep != nil {
-		ep.GetRxChannel() <- NewEndPointData(context.GetConnection(), message)
+		ep.GetRxChannel() <- NewEndPointData().
+			SetConnection(context.GetConnection()).
+			SetData(message)
 	}
 }
 

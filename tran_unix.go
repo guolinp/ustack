@@ -70,12 +70,12 @@ func (c *UDSTransportConnection) UseReference() bool {
 
 // GetReference ...
 func (c *UDSTransportConnection) GetReference() (p interface{}, err error) {
-	return nil, errors.New("GetReference: Does not support this call")
+	return nil, errors.New("UDSTransportConnection:GetReference: does not support this call")
 }
 
 // SetReference ...
 func (c *UDSTransportConnection) SetReference(p interface{}) error {
-	return errors.New("GetReference: Does not support this call")
+	return errors.New("UDSTransportConnection:SetReference: does not support this call")
 }
 
 // Close ...

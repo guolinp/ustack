@@ -8,11 +8,12 @@ package ustack
 type Context interface {
 	SetConnection(connection TransportConnection) Context
 	GetConnection() TransportConnection
-	UseReference() bool
 	SetOption(name string, value interface{}) Context
 	GetOption(name string) interface{}
 	SetBuffer(ub *UBuf) Context
 	GetBuffer() *UBuf
+	SetMessage(message interface{}) Context
+	GetMessage() interface{}
 }
 
 // UStack ...
@@ -32,6 +33,7 @@ type UStack interface {
 	GetEndPoint() []EndPoint
 
 	AppendDataProcessor(dp DataProcessor) UStack
+
 	GetOverhead() int
 	GetMTU() int
 

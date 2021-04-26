@@ -26,7 +26,9 @@ func client() {
 							connection := event.Data.(ustack.TransportConnection)
 							user := &User{Name: "LiSi", Age: 10}
 							fmt.Println("Send:", user.Name, user.Age)
-							endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, user)
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData(user)
 						} else if event.Type == ustack.UStackEventConnectionClosed {
 							os.Exit(1)
 						}

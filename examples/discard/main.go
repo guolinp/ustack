@@ -20,7 +20,9 @@ func client() {
 							go func() {
 								for {
 									time.Sleep(time.Millisecond * 1000)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData([]byte("1234"))
 								}
 							}()
 						} else if event.Type == ustack.UStackEventConnectionClosed {

@@ -12,26 +12,35 @@ func client() {
 	ustack.NewUStack().
 		SetName("Client").
 		AddEndPoint(
-			ustack.NewEndPoint("EP-Client", 0).
+			ustack.NewEndPoint("EP1", 1).
 				SetEventListener(
 					func(endpoint ustack.EndPoint, event ustack.Event) {
 						if event.Type == ustack.UStackEventNewConnection {
 							connection := event.Data.(ustack.TransportConnection)
 							go func() {
+								data := []byte("1234")
 								for {
 									time.Sleep(time.Millisecond * 1000)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte("1234"))
+									fmt.Println(endpoint.GetName(), "Send:", string(data))
+
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetDestinationSession(2).
+										SetData(data)
 								}
 							}()
 						} else if event.Type == ustack.UStackEventConnectionClosed {
 							os.Exit(1)
 						}
-					}).
+					})).
+		AddEndPoint(
+			ustack.NewEndPoint("EP2", 2).
 				SetDataListener(
 					func(endpoint ustack.EndPoint, epd ustack.EndPointData) {
-						fmt.Println("Receive echo:", string(epd.GetData().([]byte)))
+						fmt.Println(endpoint.GetName(), "Receive:", string(epd.GetData().([]byte)))
 					})).
 		AppendDataProcessor(ustack.NewBytesCodec()).
+		AppendDataProcessor(ustack.NewSessionResolver()).
 		AddTransport(
 			ustack.NewTCPTransport("tcpClient").
 				ForServer(false).

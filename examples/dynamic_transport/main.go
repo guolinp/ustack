@@ -56,7 +56,9 @@ func client() {
 								}
 								for {
 									time.Sleep(time.Millisecond * 1000)
-									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, data)
+									endpoint.GetTxChannel() <- ustack.NewEndPointData().
+										SetConnection(connection).
+										SetData(data)
 								}
 							}(conn)
 
