@@ -4,21 +4,21 @@
 
 package ustack
 
-// BytesCodec ...
-type BytesCodec struct {
+// StringCodec ...
+type StringCodec struct {
 	ProcBase
 }
 
-// NewBytesCodec ...
-func NewBytesCodec() DataProcessor {
-	bc := &BytesCodec{
-		NewProcBaseInstance("BytesCodec"),
+// NewStringCodec ...
+func NewStringCodec() DataProcessor {
+	bc := &StringCodec{
+		NewProcBaseInstance("StringCodec"),
 	}
 	return bc.ProcBase.SetWhere(bc)
 }
 
 // OnUpperData ...
-func (bc *BytesCodec) OnUpperData(context Context) {
+func (bc *StringCodec) OnUpperData(context Context) {
 
 	if bc.enable {
 		message := context.GetMessage()
@@ -26,7 +26,7 @@ func (bc *BytesCodec) OnUpperData(context Context) {
 			return
 		}
 
-		bytes, ok := message.([]byte)
+		str, ok := message.(string)
 		if !ok {
 			return
 		}
@@ -35,7 +35,7 @@ func (bc *BytesCodec) OnUpperData(context Context) {
 			bc.ustack.GetMTU(),
 			bc.ustack.GetOverhead())
 
-		n, err := ub.Write(bytes)
+		n, err := ub.Write([]byte(str))
 		if n == 0 || err != nil {
 			return
 		}
@@ -47,7 +47,7 @@ func (bc *BytesCodec) OnUpperData(context Context) {
 }
 
 // OnLowerData ...
-func (bc *BytesCodec) OnLowerData(context Context) {
+func (bc *StringCodec) OnLowerData(context Context) {
 	if bc.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -61,7 +61,7 @@ func (bc *BytesCodec) OnLowerData(context Context) {
 			return
 		}
 
-		context.SetMessage(bytes)
+		context.SetMessage(string(bytes))
 	}
 
 	bc.upper.OnLowerData(context)
