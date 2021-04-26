@@ -35,6 +35,11 @@ func (frm *FrameDecoder) GetOverhead() int {
 
 // OnUpperData ...
 func (frm *FrameDecoder) OnUpperData(context Context) {
+	if context.UseReference() {
+		frm.upper.OnUpperData(context)
+		return
+	}
+
 	if frm.enable {
 		ub := context.GetBuffer()
 		if ub == nil {
@@ -163,6 +168,11 @@ func (frm *FrameDecoder) handleCachedData(context Context, ub *UBuf) {
 
 // OnLowerData ...
 func (frm *FrameDecoder) OnLowerData(context Context) {
+	if context.UseReference() {
+		frm.upper.OnLowerData(context)
+		return
+	}
+
 	ub := context.GetBuffer()
 	if ub == nil {
 		return

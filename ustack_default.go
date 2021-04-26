@@ -37,6 +37,14 @@ func (c *DefaultUStackContext) GetConnection() TransportConnection {
 	return c.connection
 }
 
+// IsSameProcess ...
+func (c *DefaultUStackContext) UseReference() bool {
+	if c.connection != nil {
+		return c.connection.UseReference()
+	}
+	return false
+}
+
 // SetOption ...
 func (c *DefaultUStackContext) SetOption(name string, value interface{}) Context {
 	c.options[name] = value

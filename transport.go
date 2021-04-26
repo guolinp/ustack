@@ -9,6 +9,9 @@ type TransportConnection interface {
 	GetName() string
 	Read(p []byte) (n int, err error)
 	Write(p []byte) (n int, err error)
+	UseReference() bool
+	GetReference() (p interface{}, err error)
+	SetReference(p interface{}) error
 	Close()
 	Closed() bool
 }

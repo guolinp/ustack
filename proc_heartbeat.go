@@ -93,6 +93,11 @@ func (hb *Heartbeat) GetOverhead() int {
 
 // OnUpperData ...
 func (hb *Heartbeat) OnUpperData(context Context) {
+	if context.UseReference() {
+		hb.lower.OnUpperData(context)
+		return
+	}
+
 	ub := context.GetBuffer()
 	if ub == nil {
 		return
@@ -105,6 +110,11 @@ func (hb *Heartbeat) OnUpperData(context Context) {
 
 // OnLowerData ...
 func (hb *Heartbeat) OnLowerData(context Context) {
+	if context.UseReference() {
+		hb.upper.OnLowerData(context)
+		return
+	}
+
 	ub := context.GetBuffer()
 	if ub == nil {
 		return

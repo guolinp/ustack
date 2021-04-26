@@ -58,19 +58,31 @@ func (ld *LowerDeck) acceptTransport(tp Transport) {
 			// New routine to continue receive data from connection
 			go func() {
 				for {
-					ub := UBufAlloc(ld.ustack.GetMTU())
+					if connection.UseReference() {
+						message, err := connection.GetReference()
+						if message == nil || err != nil {
+							ld.closeConnection(connection)
+							return
+						}
 
-					n, err := ub.ReadFrom(connection)
-					if n == 0 || err != nil {
-						ld.closeConnection(connection)
-						return
+						ld.upper.OnLowerData(
+							NewUStackContext().
+								SetConnection(connection).
+								SetOption("message", message))
+					} else {
+						ub := UBufAlloc(ld.ustack.GetMTU())
+
+						n, err := ub.ReadFrom(connection)
+						if n == 0 || err != nil {
+							ld.closeConnection(connection)
+							return
+						}
+						// invoke the uplayer
+						ld.upper.OnLowerData(
+							NewUStackContext().
+								SetConnection(connection).
+								SetBuffer(ub))
 					}
-
-					// invoke the uplayer
-					ld.upper.OnLowerData(
-						NewUStackContext().
-							SetConnection(connection).
-							SetBuffer(ub))
 				}
 			}()
 		}
@@ -84,17 +96,23 @@ func (ld *LowerDeck) deleteTransport(tp Transport) {
 
 // OnUpperData sends ulayer data with connection
 func (ld *LowerDeck) OnUpperData(context Context) {
-	ub := context.GetBuffer()
-	if ub == nil {
-		return
-	}
+	var err error
 
 	connection := context.GetConnection()
 	if connection == nil {
 		return
 	}
 
-	_, err := ub.WriteTo(connection)
+	if context.UseReference() {
+		err = connection.SetReference(context.GetOption("message"))
+	} else {
+		ub := context.GetBuffer()
+		if ub == nil {
+			return
+		}
+		_, err = ub.WriteTo(connection)
+	}
+
 	if err != nil {
 		fmt.Printf("Connection is closed: %s\n", connection.GetName())
 		ld.closeConnection(connection)

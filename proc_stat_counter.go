@@ -41,6 +41,11 @@ func (hb *StatCounter) GetOverhead() int {
 
 // OnUpperData ...
 func (sc *StatCounter) OnUpperData(context Context) {
+	if context.UseReference() {
+		sc.lower.OnUpperData(context)
+		return
+	}
+
 	ub := context.GetBuffer()
 	if ub == nil {
 		return
@@ -102,6 +107,11 @@ func (sc *StatCounter) show(context Context) {
 
 // OnLowerData ...
 func (sc *StatCounter) OnLowerData(context Context) {
+	if context.UseReference() {
+		sc.upper.OnLowerData(context)
+		return
+	}
+
 	ub := context.GetBuffer()
 	if ub == nil {
 		return

@@ -5,6 +5,7 @@
 package ustack
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -59,6 +60,21 @@ func (c *TCPTransportConnection) Write(p []byte) (n int, err error) {
 	}
 
 	return c.conn.Write(p)
+}
+
+// UseReference ...
+func (c *TCPTransportConnection) UseReference() bool {
+	return false
+}
+
+// GetReference ...
+func (c *TCPTransportConnection) GetReference() (p interface{}, err error) {
+	return nil, errors.New("GetReference: Does not support this call")
+}
+
+// SetReference ...
+func (c *TCPTransportConnection) SetReference(p interface{}) error {
+	return errors.New("GetReference: Does not support this call")
 }
 
 // Close ...

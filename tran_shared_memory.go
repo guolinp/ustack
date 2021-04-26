@@ -35,16 +35,16 @@ import (
 // sharedMemoryChannel ...
 type sharedMemoryChannel struct {
 	refCount         int
-	serverTxClientRx chan *[]byte
-	serverRxClientTx chan *[]byte
+	serverTxClientRx chan interface{}
+	serverRxClientTx chan interface{}
 }
 
 // newSharedMemoryChannel ...
 func newSharedMemoryChannel(size int) *sharedMemoryChannel {
 	return &sharedMemoryChannel{
 		refCount:         0,
-		serverTxClientRx: make(chan *[]byte, size),
-		serverRxClientTx: make(chan *[]byte, size),
+		serverTxClientRx: make(chan interface{}, size),
+		serverRxClientTx: make(chan interface{}, size),
 	}
 }
 
@@ -85,12 +85,27 @@ func (c *SharedMemoryTransportConnection) GetName() string {
 
 // Read ...
 func (c *SharedMemoryTransportConnection) Read(p []byte) (n int, err error) {
+	return 0, errors.New("Read: Does not support this call")
+}
+
+// Write ...
+func (c *SharedMemoryTransportConnection) Write(p []byte) (n int, err error) {
+	return 0, errors.New("Write: Does not support this call")
+}
+
+// UseReference ...
+func (c *SharedMemoryTransportConnection) UseReference() bool {
+	return true
+}
+
+// GetReference ...
+func (c *SharedMemoryTransportConnection) GetReference() (p interface{}, err error) {
 	if c.closed {
-		fmt.Println("connection is closed")
-		return 0, nil
+		fmt.Println("GetReference failed as connection is closed")
+		return nil, errors.New("SetReference: connection is closed")
 	}
 
-	var data *[]byte
+	var data interface{}
 
 	if c.forServer {
 		data = <-c.channel.serverRxClientTx
@@ -98,30 +113,27 @@ func (c *SharedMemoryTransportConnection) Read(p []byte) (n int, err error) {
 		data = <-c.channel.serverTxClientRx
 	}
 
-	return copy(p, *data), nil
+	return data, nil
 }
 
-// Write ...
-func (c *SharedMemoryTransportConnection) Write(p []byte) (n int, err error) {
+// SetReference ...
+func (c *SharedMemoryTransportConnection) SetReference(p interface{}) error {
 	if c.closed {
-		fmt.Println("connection is closed")
-		return 0, nil
+		fmt.Println("SetReference failed as connection is closed")
+		return errors.New("SetReference: connection is closed")
 	}
 
-	data := make([]byte, len(p))
-	n = copy(data, p)
-
-	if n != len(p) {
-		return 0, errors.New("short write")
+	if p == nil {
+		return errors.New("SetReference: null input")
 	}
 
 	if c.forServer {
-		c.channel.serverTxClientRx <- &data
+		c.channel.serverTxClientRx <- p
 	} else {
-		c.channel.serverRxClientTx <- &data
+		c.channel.serverRxClientTx <- p
 	}
 
-	return n, nil
+	return nil
 }
 
 // Close ...
