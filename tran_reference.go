@@ -13,64 +13,64 @@ import (
 //              Server                                                            Client
 //
 // +---------------------------------+                               +---------------------------------+
-// | SharedMemoryTransport           |                               | SharedMemoryTransport           |
+// |   ReferenceTransport            |                               |   ReferenceTransport            |
 // +----+-----------------------+----+                               +----+-----------------------+----+
 //      |                       ^                                         |                       ^
 //      |                       |                                         |                       |
 //      |                       |                                         |                       |
 //      v                       |                                         v                       |
 // +----+-----------------------+----+                               +----+-----------------------+----+
-// | SharedMemoryTransportConnection |                               | SharedMemoryTransportConnection |
+// |   ReferenceTransportConnection  |                               |   ReferenceTransportConnection  |
 // +----+-----------------------+----+                               +----+-----------------------+----+
 //      |                       ^                                         |                       ^
 //      |                       |                                         |                       |
 //      |                       |                                         |                       |
 //      |                       |         +---------------------+         |                       |
-//      |                       |         | sharedMemoryChannel |         |                       |
+//      |                       |         |  referenceChannel   |         |                       |
 //      |                       |         |                     |         |                       |
 //      |                       +---------+  serverRxClientTx   +<--------+                       |
 //      +-------------------------------->+  serverTxClientRx   +---------------------------------+
 //                                        +---------------------+
 
-// sharedMemoryChannel ...
-type sharedMemoryChannel struct {
+// referenceChannel ...
+type referenceChannel struct {
 	refCount         int
 	serverTxClientRx chan interface{}
 	serverRxClientTx chan interface{}
 }
 
-// newSharedMemoryChannel ...
-func newSharedMemoryChannel(size int) *sharedMemoryChannel {
-	return &sharedMemoryChannel{
+// newReferenceChannel ...
+func newReferenceChannel(size int) *referenceChannel {
+	return &referenceChannel{
 		refCount:         0,
 		serverTxClientRx: make(chan interface{}, size),
 		serverRxClientTx: make(chan interface{}, size),
 	}
 }
 
-// deleteSharedMemoryChannel ...
-func deleteSharedMemoryChannel(smc *sharedMemoryChannel) {
+// deleteReferenceChannel ...
+func deleteReferenceChannel(smc *referenceChannel) {
 	if smc != nil {
 		close(smc.serverTxClientRx)
 		close(smc.serverRxClientTx)
 	}
 }
 
-// SharedMemoryTransportConnection ...
-type SharedMemoryTransportConnection struct {
+// ReferenceTransportConnection ...
+type ReferenceTransportConnection struct {
 	name      string
 	forServer bool
 	closed    bool
-	channel   *sharedMemoryChannel
+	channel   *referenceChannel
 }
 
-// NewSharedMemoryTransportConnection ...
-func NewSharedMemoryTransportConnection(
+// NewReferenceTransportConnection ...
+func NewReferenceTransportConnection(
 	name string,
 	forServer bool,
-	channel *sharedMemoryChannel) TransportConnection {
+	channel *referenceChannel) TransportConnection {
 
-	return &SharedMemoryTransportConnection{
+	return &ReferenceTransportConnection{
 		name:      name,
 		forServer: forServer,
 		closed:    false,
@@ -79,27 +79,27 @@ func NewSharedMemoryTransportConnection(
 }
 
 // GetName ...
-func (c *SharedMemoryTransportConnection) GetName() string {
+func (c *ReferenceTransportConnection) GetName() string {
 	return c.name
 }
 
 // Read ...
-func (c *SharedMemoryTransportConnection) Read(p []byte) (n int, err error) {
+func (c *ReferenceTransportConnection) Read(p []byte) (n int, err error) {
 	return 0, errors.New("Read: Does not support this call")
 }
 
 // Write ...
-func (c *SharedMemoryTransportConnection) Write(p []byte) (n int, err error) {
+func (c *ReferenceTransportConnection) Write(p []byte) (n int, err error) {
 	return 0, errors.New("Write: Does not support this call")
 }
 
 // UseReference ...
-func (c *SharedMemoryTransportConnection) UseReference() bool {
+func (c *ReferenceTransportConnection) UseReference() bool {
 	return true
 }
 
 // GetReference ...
-func (c *SharedMemoryTransportConnection) GetReference() (p interface{}, err error) {
+func (c *ReferenceTransportConnection) GetReference() (p interface{}, err error) {
 	if c.closed {
 		fmt.Println("GetReference failed as connection is closed")
 		return nil, errors.New("SetReference: connection is closed")
@@ -117,7 +117,7 @@ func (c *SharedMemoryTransportConnection) GetReference() (p interface{}, err err
 }
 
 // SetReference ...
-func (c *SharedMemoryTransportConnection) SetReference(p interface{}) error {
+func (c *ReferenceTransportConnection) SetReference(p interface{}) error {
 	if c.closed {
 		fmt.Println("SetReference failed as connection is closed")
 		return errors.New("SetReference: connection is closed")
@@ -137,17 +137,17 @@ func (c *SharedMemoryTransportConnection) SetReference(p interface{}) error {
 }
 
 // Close ...
-func (c *SharedMemoryTransportConnection) Close() {
+func (c *ReferenceTransportConnection) Close() {
 	c.closed = true
 }
 
 // Closed ...
-func (c *SharedMemoryTransportConnection) Closed() bool {
+func (c *ReferenceTransportConnection) Closed() bool {
 	return c.closed
 }
 
-// SharedMemoryTransport ...
-type SharedMemoryTransport struct {
+// ReferenceTransport ...
+type ReferenceTransport struct {
 	name    string
 	options map[string]interface{}
 	sync.Mutex
@@ -159,9 +159,9 @@ type SharedMemoryTransport struct {
 	queueSize  int
 }
 
-// NewSharedMemoryTransport ...
-func NewSharedMemoryTransport(name string) Transport {
-	return &SharedMemoryTransport{
+// NewReferenceTransport ...
+func NewReferenceTransport(name string) Transport {
+	return &ReferenceTransport{
 		name:       name,
 		options:    make(map[string]interface{}),
 		isRunning:  false,
@@ -173,33 +173,33 @@ func NewSharedMemoryTransport(name string) Transport {
 }
 
 // parseOptions ...
-func (sm *SharedMemoryTransport) parseOptions() {
+func (sm *ReferenceTransport) parseOptions() {
 	size, exists := OptionParseInt(sm.GetOption("MaxQueueSize"), 512)
 	sm.queueSize = size
 	if exists {
-		fmt.Println("SharedMemoryTransport: option MaxQueueSize:", sm.queueSize)
+		fmt.Println("ReferenceTransport: option MaxQueueSize:", sm.queueSize)
 	}
 }
 
 // ForServer ...
-func (sm *SharedMemoryTransport) ForServer(forServer bool) Transport {
+func (sm *ReferenceTransport) ForServer(forServer bool) Transport {
 	sm.forServer = forServer
 	return sm
 }
 
 // GetName ...
-func (sm *SharedMemoryTransport) GetName() string {
+func (sm *ReferenceTransport) GetName() string {
 	return sm.name
 }
 
 // SetOption ...
-func (sm *SharedMemoryTransport) SetOption(name string, value interface{}) Transport {
+func (sm *ReferenceTransport) SetOption(name string, value interface{}) Transport {
 	sm.options[name] = value
 	return sm
 }
 
 // GetOption ...
-func (sm *SharedMemoryTransport) GetOption(name string) interface{} {
+func (sm *ReferenceTransport) GetOption(name string) interface{} {
 	if value, ok := sm.options[name]; ok {
 		return value
 	}
@@ -207,31 +207,31 @@ func (sm *SharedMemoryTransport) GetOption(name string) interface{} {
 }
 
 // SetAddress ...
-func (sm *SharedMemoryTransport) SetAddress(address string) Transport {
+func (sm *ReferenceTransport) SetAddress(address string) Transport {
 	sm.address = address
 	return sm
 }
 
 // GetAddress ...
-func (sm *SharedMemoryTransport) GetAddress() string {
+func (sm *ReferenceTransport) GetAddress() string {
 	return sm.address
 }
 
 // NextConnection ...
-func (sm *SharedMemoryTransport) NextConnection() TransportConnection {
+func (sm *ReferenceTransport) NextConnection() TransportConnection {
 	next := <-sm.next
 	sm.connection = next
 	return sm.connection
 }
 
 // Two Transports(Client side and Server side) should use the same
-// sharedMemoryChannel instance.
+// referenceChannel instance.
 // Keep a global list for reusing
 var mutex sync.Mutex
-var chans map[string]*sharedMemoryChannel = make(map[string]*sharedMemoryChannel, 32)
+var chans map[string]*referenceChannel = make(map[string]*referenceChannel, 32)
 
 // Run ...
-func (sm *SharedMemoryTransport) Run() Transport {
+func (sm *ReferenceTransport) Run() Transport {
 	sm.Lock()
 	defer sm.Unlock()
 
@@ -247,13 +247,13 @@ func (sm *SharedMemoryTransport) Run() Transport {
 	ch, ok := chans[sm.address]
 	if !ok {
 		// not found, create new one
-		ch = newSharedMemoryChannel(sm.queueSize)
+		ch = newReferenceChannel(sm.queueSize)
 		chans[sm.address] = ch
 	}
 
 	ch.refCount++
 
-	sm.next <- NewSharedMemoryTransportConnection(sm.name, sm.forServer, ch)
+	sm.next <- NewReferenceTransportConnection(sm.name, sm.forServer, ch)
 
 	mutex.Unlock()
 
@@ -261,7 +261,7 @@ func (sm *SharedMemoryTransport) Run() Transport {
 }
 
 // Stop ...
-func (sm *SharedMemoryTransport) Stop() Transport {
+func (sm *ReferenceTransport) Stop() Transport {
 	sm.Lock()
 	defer sm.Unlock()
 
@@ -279,7 +279,7 @@ func (sm *SharedMemoryTransport) Stop() Transport {
 
 		if ch.refCount == 0 {
 			delete(chans, sm.address)
-			deleteSharedMemoryChannel(ch)
+			deleteReferenceChannel(ch)
 		}
 	}
 

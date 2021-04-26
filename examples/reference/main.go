@@ -20,7 +20,7 @@ func client() {
 							go func() {
 								for {
 									time.Sleep(time.Millisecond * 100)
-									data := "SharedMemory 1234"
+									data := "1234567890"
 									fmt.Println("Send:", data)
 									endpoint.GetTxChannel() <- ustack.NewEndPointData(connection, []byte(data))
 								}
@@ -30,9 +30,9 @@ func client() {
 						}
 					})).
 		AddTransport(
-			ustack.NewSharedMemoryTransport("SharedMemoryClient").
+			ustack.NewReferenceTransport("Client").
 				ForServer(false).
-				SetAddress("SharedMemory")).
+				SetAddress("UnifyString")).
 		Run()
 
 }
@@ -53,9 +53,9 @@ func server() {
 						fmt.Println("Receive:", string(epd.GetData().([]byte)))
 					})).
 		AddTransport(
-			ustack.NewSharedMemoryTransport("SharedMemoryServer").
+			ustack.NewReferenceTransport("Server").
 				ForServer(true).
-				SetAddress("SharedMemory")).
+				SetAddress("UnifyString")).
 		Run()
 }
 
